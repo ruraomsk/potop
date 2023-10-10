@@ -1,0 +1,8 @@
+logpath = "log/"
+[utopia]
+work = true
+debug = true               #если истина то запускать имитатор 
+device = "rtu:///dev/com1"
+baudrate = 19200
+parity = "N"
+uid = 247
