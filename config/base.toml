@@ -6,3 +6,10 @@ device = "rtu:///dev/com1"
 baudrate = 19200
 parity = "N"
 uid = 247
+[trafficdata]
+work = true
+debug = true       #Запускать иммитатор
+host = "127.0.0.1"
+port = 1666
+listen = 1667
+chanels = 16
