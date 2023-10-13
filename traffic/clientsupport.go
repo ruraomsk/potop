@@ -129,7 +129,7 @@ func replayEvent(buffer string) {
 	}
 	zoneid, _ := strconv.Atoi(c.Body.ZoneId)
 	zoneid--
-	cartype, _ := strconv.Atoi(c.Body.CarType)
+	// cartype, _ := strconv.Atoi(c.Body.CarType)
 	if zoneid < 0 || zoneid >= len(datas) {
 		logger.Debug.Printf("event %v", c)
 		return
