@@ -100,13 +100,3 @@ const endline byte = '\n'
 const errorMessage = `
 <Message Type="ErrorMessage" />
 `
-
-type OneTick struct {
-	Nomber int
-	Value  Value
-}
-type Value struct {
-	Time   time.Time
-	Status int
-	Value  int
-}

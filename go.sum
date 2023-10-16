@@ -1,4 +1,8 @@
 github.com/BurntSushi/toml v1.3.2 h1:o7IhLm0Msx3BaB+n3Ag7L8EVlByGnpq14C4YWiu/gL8=
 github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/goburrow/serial v0.1.0 h1:v2T1SQa/dlUqQiYIT8+Cu7YolfqAi3K96UmhwYyuSrA=
+github.com/goburrow/serial v0.1.0/go.mod h1:sAiqG0nRVswsm1C97xsttiYCzSLBmUZ/VSlVLZJ8haA=
 github.com/ruraomsk/ag-server v0.0.0-20231010104045-cf659ec9fe61 h1:73rTko92sCLDVM5VRCsk9+urj2YC1tukeqmdbrEhkjE=
 github.com/ruraomsk/ag-server v0.0.0-20231010104045-cf659ec9fe61/go.mod h1:MpuTy+cjEIJ11T6mZ8/WWQS/RdnowVzDoEO9Mwyin0o=
+github.com/simonvetter/modbus v1.6.0 h1:RDHJevtc7LDIVoHAbhDun8fy+QwnGe+ZU+sLm9ZZzjc=
+github.com/simonvetter/modbus v1.6.0/go.mod h1:hh90ZaTaPLcK2REj6/fpTbiV0J6S7GWmd8q+GVRObPw=

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/setup"
 )
 
 // From Spot to the controller					Reply from controller
@@ -39,6 +40,9 @@ import (
 var serv = ServerUtopia{id: 1, lastACK: 0}
 
 func Server() {
+	if !setup.Set.Debug {
+		return
+	}
 	ticker := time.NewTicker(time.Second)
 	sendTLC := time.NewTicker(10 * time.Second)
 	sendCountDown := time.NewTicker(5 * time.Second)

@@ -12,7 +12,9 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/radar"
 	"github.com/ruraomsk/potop/setup"
+	"github.com/ruraomsk/potop/traffic"
 	"github.com/ruraomsk/potop/utopia"
 )
 
@@ -41,6 +43,9 @@ func main() {
 	time.Sleep(time.Second)
 	go utopia.Server()
 	go utopia.Controller()
+
+	go radar.Radar()
+	go traffic.Start()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

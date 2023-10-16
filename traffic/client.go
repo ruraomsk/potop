@@ -8,6 +8,7 @@ import (
 
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/setup"
+	"github.com/ruraomsk/potop/stat"
 )
 
 type StatusTrafficData struct {
@@ -150,7 +151,7 @@ func saveDatas() {
 		lastDatas[i] = datas[i]
 		datas[i] = 0
 	}
-	var send []OneTick
+	var send []stat.OneTick
 	if time.Now().Sub(lastOperation).Seconds() > 2 {
 		send = badStatistics()
 	} else {
@@ -162,19 +163,19 @@ func saveDatas() {
 	}
 
 }
-func badStatistics() []OneTick {
-	r := make([]OneTick, 0)
+func badStatistics() []stat.OneTick {
+	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.TrafficData.Chanels; i++ {
-		r = append(r, OneTick{Nomber: i + 3, Value: Value{Status: 1, Time: t, Value: 0}})
+		r = append(r, stat.OneTick{Nomber: i + 3, Value: stat.Value{Status: 1, Time: t, Value: 0}})
 	}
 	return r
 }
-func goodStatistics() []OneTick {
-	r := make([]OneTick, 0)
+func goodStatistics() []stat.OneTick {
+	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.TrafficData.Chanels; i++ {
-		r = append(r, OneTick{Nomber: i + 3, Value: Value{Status: 0, Time: t, Value: int(lastDatas[i])}})
+		r = append(r, stat.OneTick{Nomber: i + 3, Value: stat.Value{Status: 0, Time: t, Value: int(lastDatas[i])}})
 	}
 	return r
 }

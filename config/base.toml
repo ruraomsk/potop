@@ -1,4 +1,5 @@
 logpath = "log/"
+debug = true
 [utopia]
 work = true
 debug = true               #если истина то запускать имитатор 
@@ -7,9 +8,18 @@ baudrate = 19200
 parity = "N"
 uid = 247
 [trafficdata]
-work = true
+work = false
 debug = true       #Запускать иммитатор
 host = "127.0.0.1"
 port = 1666
 listen = 1667
+chanels = 16
+[modbusradar]
+radar = true            #если истинно нужно открывать прием сигналов радара
+master = true
+debug = false
+host = "178.176.55.215"
+# host = "127.0.0.1"
+port = 15001
+id = 11
 chanels = 16
