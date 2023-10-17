@@ -4,8 +4,10 @@ import (
 	"encoding/xml"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/stat"
 )
 
 func sendGetTime(soc net.Conn) error {
@@ -129,10 +131,16 @@ func replayEvent(buffer string) {
 	}
 	zoneid, _ := strconv.Atoi(c.Body.ZoneId)
 	zoneid--
-	// cartype, _ := strconv.Atoi(c.Body.CarType)
+	cartype, _ := strconv.Atoi(c.Body.CarType)
+	cartype--
+
 	if zoneid < 0 || zoneid >= len(datas) {
 		logger.Debug.Printf("event %v", c)
 		return
 	}
-	datas[zoneid]++
+	if cartype < 0 || cartype > 9 {
+		logger.Debug.Printf("event %v", c)
+		return
+	}
+	stat.InStat <- stat.OneTick{Number: zoneid, Value: 1, Time: time.Now(), Type: 0, Diap: cartype}
 }

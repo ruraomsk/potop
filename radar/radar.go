@@ -32,9 +32,6 @@ func GetStatus() string {
 	}
 }
 func Radar() {
-	if !setup.Set.ModbusRadar.Radar {
-		return
-	}
 	eh = &handler{uptime: time.Unix(0, 0)}
 	if setup.Set.ModbusRadar.Master {
 		if setup.Set.ModbusRadar.Debug {
@@ -72,7 +69,7 @@ func badStatistics() []stat.OneTick {
 	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.ModbusRadar.Chanels; i++ {
-		r = append(r, stat.OneTick{Nomber: i + 3, Value: stat.Value{Status: 1, Time: t, Value: 0}})
+		r = append(r, stat.OneTick{Number: i, Time: t, Value: 255, Type: 0, Diap: 8})
 	}
 	return r
 }
@@ -80,7 +77,7 @@ func goodStatistics() []stat.OneTick {
 	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.ModbusRadar.Chanels; i++ {
-		r = append(r, stat.OneTick{Nomber: i + 3, Value: stat.Value{Status: 0, Time: t, Value: int(eh.dates[i])}})
+		r = append(r, stat.OneTick{Number: i, Time: t, Value: 255, Type: 0, Diap: 8})
 	}
 	return r
 }

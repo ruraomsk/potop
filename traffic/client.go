@@ -8,7 +8,6 @@ import (
 
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/setup"
-	"github.com/ruraomsk/potop/stat"
 )
 
 type StatusTrafficData struct {
@@ -71,9 +70,6 @@ func GetStatus() string {
 }
 
 func Start() {
-	if !setup.Set.TrafficData.Work {
-		return
-	}
 	if setup.Set.TrafficData.Debug {
 		go Server(setup.Set.TrafficData.Port)
 	}
@@ -127,7 +123,7 @@ func Client(host string, port int, listen int) {
 			continue
 		}
 		ticker := time.NewTicker(1 * time.Second)
-		oneSecond := time.NewTicker(time.Second)
+		// oneSecond := time.NewTicker(time.Second)
 		for {
 			select {
 			case <-ticker.C:
@@ -139,43 +135,44 @@ func Client(host string, port int, listen int) {
 				if err != nil {
 					break
 				}
-			case <-oneSecond.C:
-				saveDatas()
+				// case <-oneSecond.C:
+				// 	saveDatas()
 			}
 		}
 	}
 }
-func saveDatas() {
-	mutex.Lock()
-	for i := 0; i < len(datas); i++ {
-		lastDatas[i] = datas[i]
-		datas[i] = 0
-	}
-	var send []stat.OneTick
-	if time.Now().Sub(lastOperation).Seconds() > 2 {
-		send = badStatistics()
-	} else {
-		send = goodStatistics()
-	}
-	mutex.Unlock()
-	for _, v := range send {
-		logger.Info.Printf("%v", v)
-	}
 
-}
-func badStatistics() []stat.OneTick {
-	r := make([]stat.OneTick, 0)
-	t := time.Now()
-	for i := 0; i < setup.Set.TrafficData.Chanels; i++ {
-		r = append(r, stat.OneTick{Nomber: i + 3, Value: stat.Value{Status: 1, Time: t, Value: 0}})
-	}
-	return r
-}
-func goodStatistics() []stat.OneTick {
-	r := make([]stat.OneTick, 0)
-	t := time.Now()
-	for i := 0; i < setup.Set.TrafficData.Chanels; i++ {
-		r = append(r, stat.OneTick{Nomber: i + 3, Value: stat.Value{Status: 0, Time: t, Value: int(lastDatas[i])}})
-	}
-	return r
-}
+// func saveDatas() {
+// 	mutex.Lock()
+// 	for i := 0; i < len(datas); i++ {
+// 		lastDatas[i] = datas[i]
+// 		datas[i] = 0
+// 	}
+// 	var send []stat.OneTick
+// 	if time.Now().Sub(lastOperation).Seconds() > 2 {
+// 		send = badStatistics()
+// 	} else {
+// 		send = goodStatistics()
+// 	}
+// 	mutex.Unlock()
+// 	for _, v := range send {
+// 		stat.InStat <- v
+// 	}
+
+// }
+// func badStatistics() []stat.OneTick {
+// 	r := make([]stat.OneTick, 0)
+// 	t := time.Now()
+// 	for i := 0; i < setup.Set.TrafficData.Chanels; i++ {
+// 		r = append(r, stat.OneTick{Number: i, Time: t, Diap: 8, Type: 0, Value: 255})
+// 	}
+// 	return r
+// }
+// func goodStatistics() []stat.OneTick {
+// 	r := make([]stat.OneTick, 0)
+// 	t := time.Now()
+// 	for i := 0; i < setup.Set.TrafficData.Chanels; i++ {
+// 		r = append(r, stat.OneTick{Number: i, Value: lastDatas[i], Time: t, Type: 0, Diap: 8})
+// 	}
+// 	return r
+// }

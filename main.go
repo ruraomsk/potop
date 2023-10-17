@@ -14,6 +14,7 @@ import (
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/radar"
 	"github.com/ruraomsk/potop/setup"
+	"github.com/ruraomsk/potop/stat"
 	"github.com/ruraomsk/potop/traffic"
 	"github.com/ruraomsk/potop/utopia"
 )
@@ -43,9 +44,20 @@ func main() {
 	time.Sleep(time.Second)
 	go utopia.Server()
 	go utopia.Controller()
-
-	go radar.Radar()
-	go traffic.Start()
+	isStat := false
+	if setup.Set.ModbusRadar.Radar {
+		go stat.Start(setup.Set.ModbusRadar.Chanels)
+		go radar.Radar()
+		isStat = true
+	}
+	if setup.Set.TrafficData.Work {
+		go stat.Start(setup.Set.TrafficData.Chanels)
+		go traffic.Start()
+		isStat = true
+	}
+	if !isStat {
+		go stat.NoStatistics()
+	}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
