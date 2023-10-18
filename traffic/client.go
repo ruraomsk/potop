@@ -36,6 +36,7 @@ var lastDatas []int
 var workClient = false
 var workReciever = false
 var lastOperation time.Time = time.Unix(0, 0)
+var diapazon = 0
 
 func GetStatusTrafficData() StatusTrafficData {
 	mutex.Lock()
@@ -69,7 +70,8 @@ func GetStatus() string {
 	return fmt.Sprintf("Server %s:%d", setup.Set.TrafficData.Host, setup.Set.TrafficData.Port)
 }
 
-func Start() {
+func Start(diap int) {
+	diapazon = diap
 	if setup.Set.TrafficData.Debug {
 		go Server(setup.Set.TrafficData.Port)
 	}

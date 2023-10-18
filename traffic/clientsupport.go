@@ -142,5 +142,5 @@ func replayEvent(buffer string) {
 		logger.Debug.Printf("event %v", c)
 		return
 	}
-	stat.InStat <- stat.OneTick{Number: zoneid, Value: 1, Time: time.Now(), Type: 0, Diap: cartype}
+	stat.InStat <- stat.OneTick{Number: zoneid, Value: 1, Time: time.Now(), Type: 0, Diap: diapazon}
 }

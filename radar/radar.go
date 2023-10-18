@@ -12,6 +12,7 @@ import (
 
 var eh *handler
 var work = false
+var diapazon = 0
 
 func GetValues() string {
 	if !work {
@@ -31,7 +32,8 @@ func GetStatus() string {
 		return fmt.Sprintf("slave port %d id=%d", setup.Set.ModbusRadar.Port, setup.Set.ModbusRadar.ID)
 	}
 }
-func Radar() {
+func Radar(diap int) {
+	diapazon = diap
 	eh = &handler{uptime: time.Unix(0, 0)}
 	if setup.Set.ModbusRadar.Master {
 		if setup.Set.ModbusRadar.Debug {
@@ -69,7 +71,7 @@ func badStatistics() []stat.OneTick {
 	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.ModbusRadar.Chanels; i++ {
-		r = append(r, stat.OneTick{Number: i, Time: t, Value: 255, Type: 0, Diap: 8})
+		r = append(r, stat.OneTick{Number: i, Time: t, Value: 255, Type: 0, Diap: diapazon})
 	}
 	return r
 }
@@ -77,7 +79,7 @@ func goodStatistics() []stat.OneTick {
 	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.ModbusRadar.Chanels; i++ {
-		r = append(r, stat.OneTick{Number: i, Time: t, Value: 255, Type: 0, Diap: 8})
+		r = append(r, stat.OneTick{Number: i, Time: t, Value: 255, Type: 0, Diap: diapazon})
 	}
 	return r
 }

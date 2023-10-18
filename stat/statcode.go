@@ -1,15 +1,22 @@
 package stat
 
-import "github.com/ruraomsk/ag-server/logger"
+import (
+	"time"
+
+	"github.com/ruraomsk/ag-server/logger"
+)
 
 var InStat chan OneTick
 var Statistics Chanels
 
-func Start(chanels int) {
+func Start(chanels int, diaps int) {
 	InStat = make(chan OneTick, 100)
-	Statistics.clear(chanels)
+	Statistics.clearAll(chanels, diaps)
+	ticker := time.NewTicker(time.Second)
 	for {
 		select {
+		case <-ticker.C:
+			Statistics.newSecond()
 		case t := <-InStat:
 			err := Statistics.add(t)
 			if err != nil {
@@ -20,7 +27,7 @@ func Start(chanels int) {
 }
 func NoStatistics() {
 	InStat = make(chan OneTick, 100)
-	Statistics.clear(0)
+	Statistics.clearAll(0, 0)
 	for {
 		select {
 		case t := <-InStat:

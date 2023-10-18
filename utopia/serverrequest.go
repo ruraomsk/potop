@@ -7,6 +7,7 @@ import (
 
 // Spot TlcAndGroupControl and group control (2)
 type TlcAndGroupControl struct {
+	lastop   time.Time
 	command  int      //команда 0 нет команды 1 - локальная команда 2 - команда из центра 3 - мигание
 	watchdog int      //Watch-dog время действия (в секундах) для команды
 	ctrlSG   [64]bool //управление сигнальными группами(СГ).
@@ -15,6 +16,7 @@ type TlcAndGroupControl struct {
 }
 
 func (t *TlcAndGroupControl) toData() []byte {
+	t.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 2, byte(t.command), byte(t.watchdog))
 	b := make([]byte, 8)
@@ -43,6 +45,7 @@ func (t *TlcAndGroupControl) fromData(data []byte) error {
 	if len(data) != 11 {
 		return fmt.Errorf("сообщение 2 неверная длина")
 	}
+	t.lastop = time.Now()
 	t.command = int(data[1])
 	t.watchdog = int(data[2])
 	j := 0
@@ -64,13 +67,15 @@ func (t *TlcAndGroupControl) fromData(data []byte) error {
 
 // Spot Message 8  – Signal group count-down, управление сигнальными группами
 type CountDown struct {
-	index int      //Индекс группы из 8 сигнальных групп
-	count [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
+	lastop time.Time
+	index  int      //Индекс группы из 8 сигнальных групп
+	count  [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
 	//Время работы (в секундах, до следующего изменения командой).
 	// Ожидаемое время устанавливается равным 255, если сигнальная группа не доступна.
 }
 
 func (c *CountDown) toData() []byte {
+	c.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 8, byte(c.index))
 	for _, v := range c.count {
@@ -82,6 +87,7 @@ func (c *CountDown) fromData(data []byte) error {
 	if data[0] != 8 {
 		return fmt.Errorf("это не сообщение 8")
 	}
+	c.lastop = time.Now()
 	c.index = int(data[1])
 	for i := 0; i < len(c.count); i++ {
 		c.count[i] = data[i+1]
@@ -91,6 +97,7 @@ func (c *CountDown) fromData(data []byte) error {
 
 // Spot Message 9  – Extended Signal group count-down, управление сигнальными группами
 type ExtendedCountDown struct {
+	lastop     time.Time
 	plan       int
 	index      int //Индекс группы из 8 сигнальных групп
 	stage      int //current stage length, according to signal plan
@@ -107,6 +114,7 @@ type ExtendedCountDown struct {
 }
 
 func (e *ExtendedCountDown) toData() []byte {
+	e.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 9, byte(e.plan), byte(e.index), byte(e.stage), byte(e.signalplan))
 	for _, v := range e.spare {
@@ -121,6 +129,7 @@ func (e *ExtendedCountDown) fromData(data []byte) error {
 	if data[0] != 9 {
 		return fmt.Errorf("это не сообщение 9")
 	}
+	e.lastop = time.Now()
 	e.plan = int(data[1])
 	e.index = int(data[2])
 	e.stage = int(data[3])
@@ -136,9 +145,11 @@ func (e *ExtendedCountDown) fromData(data []byte) error {
 
 // Message 0 – Diagnostic request message
 type DiagnosticRequest struct {
+	lastop time.Time
 }
 
 func (d *DiagnosticRequest) toData() []byte {
+	d.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 0)
 	return result
@@ -147,14 +158,17 @@ func (d *DiagnosticRequest) fromData(data []byte) error {
 	if data[0] != 0 {
 		return fmt.Errorf("это не сообщение 0")
 	}
+	d.lastop = time.Now()
 	return nil
 }
 
 // Message 24 – Request for classified counts by vehicle length
 type ReqClassifiedLenght struct {
+	lastop time.Time
 }
 
 func (r *ReqClassifiedLenght) toData() []byte {
+	r.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 24)
 	return result
@@ -163,14 +177,17 @@ func (r *ReqClassifiedLenght) fromData(data []byte) error {
 	if data[0] != 24 {
 		return fmt.Errorf("это не сообщение 24")
 	}
+	r.lastop = time.Now()
 	return nil
 }
 
 // Message 25 – Request for classified counts by vehicle speed
 type ReqClassifiedSpeed struct {
+	lastop time.Time
 }
 
 func (r *ReqClassifiedSpeed) toData() []byte {
+	r.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 25)
 	return result
@@ -179,11 +196,13 @@ func (r *ReqClassifiedSpeed) fromData(data []byte) error {
 	if data[0] != 25 {
 		return fmt.Errorf("это не сообщение 25")
 	}
+	r.lastop = time.Now()
 	return nil
 }
 
 // Message 23 – Bus prediction
 type BusPrediction struct {
+	lastop         time.Time
 	PTcode         int  //PT service code
 	PTid           int  //PT vehicle ID
 	PTtime         int  //PT vehicle expected arrival time
@@ -193,6 +212,7 @@ type BusPrediction struct {
 }
 
 func (b *BusPrediction) toData() []byte {
+	b.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 23)
 	result = append(result, byte((b.PTcode>>8)&0xff), byte(b.PTcode&0xff))
@@ -207,6 +227,7 @@ func (b *BusPrediction) fromData(data []byte) error {
 	if data[0] != 23 {
 		return fmt.Errorf("это не сообщение 23")
 	}
+	b.lastop = time.Now()
 	b.PTcode = int(data[1])<<8 | int(data[2])
 	b.PTid = int(data[3])<<8 | int(data[4])
 	b.PTtime = int(data[5])<<8 | int(data[6])
@@ -249,10 +270,12 @@ func (d *DateAndTime) fromData(data []byte) error {
 
 // Message 6 - Special commands
 type SpecialCommands struct {
-	value byte //value 1 for reset alarms
+	lastop time.Time
+	value  byte //value 1 for reset alarms
 }
 
 func (s *SpecialCommands) toData() []byte {
+	s.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 6, s.value)
 
@@ -262,6 +285,7 @@ func (s *SpecialCommands) fromData(data []byte) error {
 	if data[0] != 6 {
 		return fmt.Errorf("это не сообщение 6")
 	}
+	s.lastop = time.Now()
 	s.value = data[1]
 	return nil
 }

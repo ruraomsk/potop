@@ -14,8 +14,8 @@ type OneTick struct {
 	Value  int
 }
 type Value struct {
-	Status int     //Качество 0 - хорошее 1 обрыв
-	Value  [10]int //Значения по типу
+	Status int   //Качество 0 - хорошее 1 обрыв
+	Value  []int //Значения по типу
 	//Если кол-во
 	// Class			Description
 	// I				Up to 2,5 meters
@@ -56,8 +56,9 @@ type Chanels struct {
 	chanels map[int]*OneChanel
 }
 
-func (v *Value) clear() {
+func (v *Value) clear(diaps int) {
 	v.Status = 1
+	v.Value = make([]int, diaps)
 	for i := 0; i < len(v.Value); i++ {
 		v.Value[i] = 0xff
 	}
@@ -68,6 +69,7 @@ func (v *Value) add(t OneTick) error {
 	}
 	if t.Value == 0xff {
 		v.Status = 1
+		v.Value[t.Diap] = 0xff
 	} else {
 		v.Status = 0
 		if v.Value[t.Diap] == 0xff {
@@ -79,20 +81,32 @@ func (v *Value) add(t OneTick) error {
 	return nil
 }
 
-func (o *OneChanel) clear() {
-	o.CountValues.clear()
-	o.SpeedValues.clear()
-	o.LastCount.clear()
-	o.LastSpeed.clear()
+func (o *OneChanel) clearAll(diaps int) {
+	o.CountValues.clear(diaps)
+	o.SpeedValues.clear(diaps)
+	o.LastCount.clear(diaps)
+	o.LastSpeed.clear(diaps)
 }
-func (c *Chanels) clear(chanels int) {
+func (c *Chanels) newSecond() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	for i := 0; i < c.counts; i++ {
+		v, is := c.chanels[i]
+		if !is {
+			continue
+		}
+		v.LastCount.clear(c.diaps)
+		v.LastSpeed.clear(c.diaps)
+	}
+}
+func (c *Chanels) clearAll(chanels int, diaps int) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.counts = chanels
-	c.diaps = 10
+	c.diaps = diaps
 	for i := 0; i < chanels; i++ {
 		v := OneChanel{Number: i}
-		v.clear()
+		v.clearAll(c.diaps)
 		c.chanels[i] = &v
 	}
 }
@@ -108,8 +122,17 @@ func (c *Chanels) add(t OneTick) error {
 func (o *OneChanel) add(t OneTick) error {
 	switch t.Type {
 	case 0: //Кол-во
+		err := o.LastCount.add(t)
+		if err != nil {
+			return err
+		}
 		return o.CountValues.add(t)
+
 	case 1: //Скорость
+		err := o.LastSpeed.add(t)
+		if err != nil {
+			return err
+		}
 		return o.SpeedValues.add(t)
 	default:
 		return fmt.Errorf("ошибка типа сообщения %d", t.Type)

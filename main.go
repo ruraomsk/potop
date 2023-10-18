@@ -46,13 +46,13 @@ func main() {
 	go utopia.Controller()
 	isStat := false
 	if setup.Set.ModbusRadar.Radar {
-		go stat.Start(setup.Set.ModbusRadar.Chanels)
-		go radar.Radar()
+		go stat.Start(setup.Set.ModbusRadar.Chanels, setup.Set.ModbusRadar.Diaps)
+		go radar.Radar(setup.Set.ModbusRadar.Diap)
 		isStat = true
 	}
 	if setup.Set.TrafficData.Work {
-		go stat.Start(setup.Set.TrafficData.Chanels)
-		go traffic.Start()
+		go stat.Start(setup.Set.TrafficData.Chanels, setup.Set.TrafficData.Diaps)
+		go traffic.Start(setup.Set.TrafficData.Diap)
 		isStat = true
 	}
 	if !isStat {

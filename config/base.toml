@@ -14,6 +14,8 @@ host = "127.0.0.1"
 port = 1666
 listen = 1667
 chanels = 16
+diaps = 1
+diap = 0
 [modbusradar]
 radar = true            #если истинно нужно открывать прием сигналов радара
 master = true
@@ -23,3 +25,5 @@ host = "178.176.55.215"
 port = 15001
 id = 11
 chanels = 16
+diaps = 1
+diap = 0

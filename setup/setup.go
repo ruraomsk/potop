@@ -24,6 +24,8 @@ type ModbusRadar struct {
 	Port    int    `toml:"port" json:"port"`
 	ID      int    `toml:"id" json:"id"`
 	Chanels int    `toml:"chanels" json:"chanels"`
+	Diaps   int    `toml:"diaps" json:"diaps"`
+	Diap    int    `toml:"diap" json:"diap"`
 }
 
 type Utopia struct {
@@ -41,6 +43,8 @@ type TrafficData struct {
 	Port    int    `toml:"port" json:"port"`
 	Listen  int    `toml:"listen" json:"listen"`
 	Chanels int    `toml:"chanels" json:"chanels"`
+	Diaps   int    `toml:"diaps" json:"diaps"`
+	Diap    int    `toml:"diap" json:"diap"`
 }
 
 func (s *Setup) Update(es ExtSetup) {

@@ -1,9 +1,13 @@
 package utopia
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // Controller Message 190 - Status and detections: message
 type StatusAndDetections struct {
+	lastop    time.Time
 	plan      int  //Номер плана
 	TLCstatus byte //Сосотояние контроллера
 	TLCbasic  byte //Состояние диагностики
@@ -25,6 +29,7 @@ type sensor struct {
 }
 
 func (s *StatusAndDetections) toData() []byte {
+	s.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 190, byte(s.plan), s.TLCstatus, s.TLCbasic)
 	for _, v := range s.sensors {
@@ -36,6 +41,7 @@ func (s *StatusAndDetections) fromData(data []byte) error {
 	if data[0] != 190 {
 		return fmt.Errorf("это не сообщение 190 %d", data[0])
 	}
+	s.lastop = time.Now()
 	s.plan = int(data[1])
 	s.TLCstatus = data[2]
 	s.TLCbasic = data[3]
@@ -51,6 +57,7 @@ func (s *StatusAndDetections) fromData(data []byte) error {
 
 // Controller Message 4 – Signal Group feedback, ответ от сигнальных групп
 type SignalGroupFeedback struct {
+	lastop time.Time
 	states [32]int //Состояние светофорной группы Может принимать значения
 	// Красный, красный (пешеходный) 					0х0
 	// Желтый, зеленый мигающий и желтый				0х1
@@ -65,6 +72,7 @@ type SignalGroupFeedback struct {
 }
 
 func (s *SignalGroupFeedback) toData() []byte {
+	s.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 4)
 	b := make([]byte, 16)
@@ -85,6 +93,7 @@ func (s *SignalGroupFeedback) fromData(data []byte) error {
 	if data[0] != 4 {
 		return fmt.Errorf("это не сообщение 4")
 	}
+	s.lastop = time.Now()
 	j := 1
 	l := 4
 	for i := 0; i < len(s.states); i++ {
@@ -100,6 +109,7 @@ func (s *SignalGroupFeedback) fromData(data []byte) error {
 
 // Message 5 – Extended diagnostic
 type ExtendedDiagnostic struct {
+	lastop   time.Time
 	Extrrors []ExtError
 }
 type ExtError struct {
@@ -107,6 +117,7 @@ type ExtError struct {
 }
 
 func (e *ExtendedDiagnostic) new() {
+	e.lastop = time.Now()
 	e.Extrrors = make([]ExtError, 0)
 	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 1, 0}})
 	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{12, 0, 0}})
@@ -114,6 +125,7 @@ func (e *ExtendedDiagnostic) new() {
 }
 
 func (e *ExtendedDiagnostic) toData() []byte {
+	e.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 5)
 	for _, v := range e.Extrrors {
@@ -127,6 +139,7 @@ func (e *ExtendedDiagnostic) fromData(data []byte) error {
 	if data[0] != 5 {
 		return fmt.Errorf("это не сообщение 5")
 	}
+	e.lastop = time.Now()
 	e.Extrrors = make([]ExtError, 0)
 	if (len(data)-1)%3 != 0 {
 		return fmt.Errorf("неверная структура сообщения %d", len(data))
@@ -142,6 +155,7 @@ func (e *ExtendedDiagnostic) fromData(data []byte) error {
 
 // Message 24 – Classified counts by vehicle length
 type ClassifiedCounts struct {
+	lastop   time.Time
 	LCLASSES int //No. vehicle length classes described in the message
 	LSENSORS int //No. classification sensors described in the message
 	Sensors  []Sensor
@@ -151,6 +165,7 @@ type Sensor struct {
 }
 
 func (c *ClassifiedCounts) new(classes int, sensors int) {
+	c.lastop = time.Now()
 	c.LCLASSES = classes
 	c.LSENSORS = sensors
 	var sensor Sensor
@@ -162,6 +177,7 @@ func (c *ClassifiedCounts) new(classes int, sensors int) {
 }
 
 func (c *ClassifiedCounts) toData() []byte {
+	c.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 24, byte(c.LCLASSES), byte(c.LSENSORS))
 	for _, v := range c.Sensors {
@@ -175,6 +191,7 @@ func (c *ClassifiedCounts) fromData(data []byte) error {
 	if data[0] != 24 {
 		return fmt.Errorf("это не сообщение 24")
 	}
+	c.lastop = time.Now()
 	c.LCLASSES = int(data[1])
 	c.LSENSORS = int(data[2])
 	c.Sensors = make([]Sensor, 0)
@@ -194,12 +211,14 @@ func (c *ClassifiedCounts) fromData(data []byte) error {
 
 // Message 25 – Classified counts by vehicle speed
 type ClassifiedSpeeds struct {
+	lastop   time.Time
 	LCLASSES int //No. vehicle length classes described in the message
 	LSENSORS int //No. classification sensors described in the message
 	Sensors  []Sensor
 }
 
 func (c *ClassifiedSpeeds) new(classes int, sensors int) {
+	c.lastop = time.Now()
 	c.LCLASSES = classes
 	c.LSENSORS = sensors
 	var sensor Sensor
@@ -211,6 +230,7 @@ func (c *ClassifiedSpeeds) new(classes int, sensors int) {
 }
 
 func (c *ClassifiedSpeeds) toData() []byte {
+	c.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 25, byte(c.LCLASSES), byte(c.LSENSORS))
 	for _, v := range c.Sensors {
@@ -224,6 +244,7 @@ func (c *ClassifiedSpeeds) fromData(data []byte) error {
 	if data[0] != 25 {
 		return fmt.Errorf("это не сообщение 24")
 	}
+	c.lastop = time.Now()
 	c.LCLASSES = int(data[1])
 	c.LSENSORS = int(data[2])
 	c.Sensors = make([]Sensor, 0)
@@ -243,6 +264,7 @@ func (c *ClassifiedSpeeds) fromData(data []byte) error {
 
 // Message 1 – Bus detection
 type BusDetection struct {
+	lastop          time.Time
 	PTid            int //PT vehicle ID
 	Direction       int
 	Delay           int
@@ -254,6 +276,7 @@ type BusDetection struct {
 }
 
 func (b *BusDetection) toData() []byte {
+	b.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 1, byte(b.PTid&0xff), byte(b.PTid>>8&0xff))
 	result = append(result, byte(b.Direction), byte(b.Delay), byte(b.PTSensorAddress))
@@ -267,6 +290,7 @@ func (b *BusDetection) fromData(data []byte) error {
 	if data[0] != 1 {
 		return fmt.Errorf("это не сообщение 1")
 	}
+	b.lastop = time.Now()
 	b.PTid = int(data[1]) | int(data[2])<<8
 	b.Direction = int(data[3])
 	b.Delay = int(data[4])
@@ -281,10 +305,12 @@ func (b *BusDetection) fromData(data []byte) error {
 
 // Message 7 – Reply to a special command
 type ReplaySpecial struct {
+	lastop        time.Time
 	CommandReplay int
 }
 
 func (s *ReplaySpecial) toData() []byte {
+	s.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 7, byte(s.CommandReplay))
 
@@ -294,6 +320,7 @@ func (s *ReplaySpecial) fromData(data []byte) error {
 	if data[0] != 7 {
 		return fmt.Errorf("это не сообщение 7")
 	}
+	s.lastop = time.Now()
 	s.CommandReplay = int(data[1])
 	return nil
 }
