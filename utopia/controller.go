@@ -67,6 +67,7 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
+
 			ctrl.sendReplay(ctrl.StatusAndDetections.toData())
 		case 8:
 			// Message 8 – Signal group count-down
