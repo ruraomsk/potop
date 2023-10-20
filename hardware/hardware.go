@@ -1,0 +1,5 @@
+package hardware
+
+func Start() {
+
+}
