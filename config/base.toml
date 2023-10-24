@@ -3,10 +3,18 @@ debug = true
 [utopia]
 work = true
 debug = true               #если истина то запускать имитатор 
+device = "rtu:///dev/com2"
+baudrate = 19200
+parity = "N"
+uid = 247
+[modbus]
+# device="rtu:///dev/ttyUSB0"
+# device = "rtu:///dev/ttyEXTRA2_00"
 device = "rtu:///dev/com1"
 baudrate = 19200
 parity = "N"
 uid = 247
+
 [trafficdata]
 work = false
 debug = true       #Запускать иммитатор

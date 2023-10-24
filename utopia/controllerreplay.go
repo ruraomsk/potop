@@ -9,7 +9,7 @@ import (
 type StatusAndDetections struct {
 	lastop    time.Time
 	plan      int  //Номер плана
-	TLCstatus byte //Сосотояние контроллера
+	TLCstatus byte //Состояние контроллера
 	TLCbasic  byte //Состояние диагностики
 	//The following correspondences are proposed as an example:
 	//  bit00 (0x01): “watch-dog expired”

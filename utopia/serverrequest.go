@@ -8,7 +8,7 @@ import (
 // Spot TlcAndGroupControl and group control (2)
 type TlcAndGroupControl struct {
 	lastop   time.Time
-	command  int      //команда 0 нет команды 1 - локальная команда 2 - команда из центра 3 - мигание
+	command  int      //команда 0 нет команды 1 - локальная команда 2 - команда из центра 3 - мигание 6 - отключение 7-запустить план
 	watchdog int      //Watch-dog время действия (в секундах) для команды
 	ctrlSG   [64]bool //управление сигнальными группами(СГ).
 	// Информация кодируется с использованием одного бита для передачи команды управления одной группой сигналов.
@@ -21,7 +21,7 @@ func (t *TlcAndGroupControl) toData() []byte {
 	result = append(result, 2, byte(t.command), byte(t.watchdog))
 	b := make([]byte, 8)
 	j := 0
-	l := 0
+	l := 7
 	for i := 0; i < len(t.ctrlSG); i++ {
 		d := 0
 		if t.ctrlSG[i] {
@@ -29,10 +29,10 @@ func (t *TlcAndGroupControl) toData() []byte {
 		}
 		d = d << l
 		b[j] |= byte(d)
-		l++
-		if l > 7 {
+		l--
+		if l < 0 {
 			j++
-			l = 0
+			l = 7
 		}
 	}
 	result = append(result, b...)
