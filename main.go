@@ -42,7 +42,9 @@ func main() {
 	logger.Info.Println("Potop start")
 	go utopia.Transport()
 	time.Sleep(time.Second)
-	go utopia.Server()
+	if setup.Set.Utopia.Debug {
+		go utopia.Server()
+	}
 	go utopia.Controller()
 	isStat := false
 	if setup.Set.ModbusRadar.Radar {

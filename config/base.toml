@@ -1,12 +1,13 @@
 logpath = "log/"
 debug = true
+
 [utopia]
-work = true
 debug = true               #если истина то запускать имитатор 
 device = "rtu:///dev/com2"
 baudrate = 19200
 parity = "N"
 uid = 247
+
 [modbus]
 # device="rtu:///dev/ttyUSB0"
 # device = "rtu:///dev/ttyEXTRA2_00"
@@ -24,6 +25,7 @@ listen = 1667
 chanels = 16
 diaps = 1
 diap = 0
+
 [modbusradar]
 radar = true  #если истинно нужно открывать прием сигналов радара
 master = true

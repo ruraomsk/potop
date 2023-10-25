@@ -35,7 +35,6 @@ type Utopia struct {
 	BaudRate int    `toml:"baudrate" json:"baudrate"`
 	Parity   string `toml:"parity" json:"parity"`
 	UId      int    `toml:"uid" json:"uid"`
-	Work     bool   `toml:"work" json:"work"`
 	Debug    bool   `toml:"debug" json:"debug"`
 }
 type TrafficData struct {
