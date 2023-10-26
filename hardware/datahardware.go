@@ -2,9 +2,18 @@ package hardware
 
 import "sync"
 
-type setDirs struct {
-	MaskDirs uint32 //Маска управления вызвать направления направления
-	WatchDog uint8  //Тайм аут управления
+// type setDirs struct {
+// 	MaskDirs [2]uint16 //Маска управления вызвать направления направления
+// 	WatchDog uint8     //Тайм аут управления
+// }
+
+type WriteHolds struct {
+	Start uint16
+	Data  []uint16
+}
+type WriteCoils struct {
+	Start uint16
+	Data  []bool
 }
 
 type StateHard struct {
@@ -13,9 +22,9 @@ type StateHard struct {
 	Dark       bool      //true если Режим ОС
 	AllRed     bool      //true если Режим Кругом Красный
 	Flashing   bool      //true если Режим Желтый Мигающий
-	Number     int       //Серийный номер КДМ
-	MaskDirs   uint32    //Маска управления вызвать направления направления
-	WatchDog   uint8     //Тайм аут управления
+	WatchDog   uint16    //Текущий Тайм аут управления
+	Plan       int       //Номер исполняемого плана контроллером КДМ
+	Status     []byte    //Статус КДМ в его кодировке
 	StatusDirs [32]uint8 //Статусы состояния по направлениям
 	//   OFF = 0, //все сигналы выключены
 	//   DEACTIV_YELLOW=1, //направление перешло в неактивное состояние, желтый после зеленого
@@ -29,9 +38,6 @@ type StateHard struct {
 	//   ZM_YELLOW_BLINK=9, //желтый мигающий в режиме ЖМ
 	//   OS_OFF=10,	//сигналы выключены в режиме ОС
 	//   UNUSED=11 //неиспользуемое направление
-	TLCChan   chan setDirs
-	CmdUtopia chan int //Команда от утопии 1 - перйти в локальный режим 2 - команда из цента 3 - ЖМ 6 - ОС 7- запустить план координации
-	Plan      chan int
 }
 
 func (s *StateHard) getConnect() bool {
@@ -50,7 +56,8 @@ func SetTLC(watchdog int, sgc [32]bool) {
 	if !state.Connect {
 		return
 	}
-	set := setDirs{WatchDog: uint8(watchdog)}
+	state.WatchDog = uint16(watchdog)
+	wh := WriteHolds{Start: 175, Data: make([]uint16, 4)}
 	b := make([]byte, 4)
 	j := 0
 	l := 7
@@ -67,8 +74,17 @@ func SetTLC(watchdog int, sgc [32]bool) {
 			l = 7
 		}
 	}
-	set.MaskDirs = uint32(b[3])<<24 | uint32(b[2])<<16 | uint32(b[1])<<8 | uint32(b[0])
-	state.TLCChan <- set
+
+	wh.Data[1] = uint16(b[3])<<8 | uint16(b[2])
+	wh.Data[2] = uint16(b[1])<<8 | uint16(b[0])
+	wh.Data[0] = uint16(watchdog)
+	wh.Data[3] = uint16(watchdog)
+
+	if state.Dark || state.Flashing || state.AllRed {
+		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
+	}
+
+	HoldsCmd <- wh
 }
 func CommandUtopia(cmd int, plan int) {
 	state.mutex.Lock()
@@ -82,14 +98,31 @@ func CommandUtopia(cmd int, plan int) {
 		return
 	case 1:
 		//Переход в локальный режим
-		state.CmdUtopia <- 1
+		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 	case 3:
 		//Переход в  режим ЖМ
-		state.CmdUtopia <- 3
+		if !state.Flashing {
+			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, true}}
+		}
+	case 4:
+		//Переход в  режим КК
+		if !state.AllRed {
+			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, true, false}}
+		}
 	case 6:
 		//Переход в  режим ОС
-		state.CmdUtopia <- 6
+		if !state.Dark {
+			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{true, false, false}}
+		}
 	case 7:
-		state.Plan <- plan
+		//Хочет включить план координации
+		if state.Dark || state.Flashing || state.AllRed {
+			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
+		}
+		if state.WatchDog != 0 {
+			state.WatchDog = 0
+			HoldsCmd <- WriteHolds{Start: 178, Data: []uint16{0}}
+		}
+		HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{uint16(plan)}}
 	}
 }

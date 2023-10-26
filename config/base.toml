@@ -4,9 +4,7 @@ debug = true
 [utopia]
 debug = true               #если истина то запускать имитатор 
 device = "rtu:///dev/com2"
-baudrate = 19200
-parity = "N"
-uid = 247
+baudrate = 38400
 
 [modbus]
 # device="rtu:///dev/ttyUSB0"
