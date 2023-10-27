@@ -3,6 +3,9 @@ package utopia
 import (
 	"fmt"
 	"time"
+
+	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/hardware"
 )
 
 // Spot TlcAndGroupControl and group control (2)
@@ -15,6 +18,14 @@ type TlcAndGroupControl struct {
 	// Бит устанавливается в 1, если группа управляется ЗЕЛЕНЫМ, устанавливается в 0 если группа получает команду КРАСНЫЙ.
 }
 
+func (t *TlcAndGroupControl) execute() {
+	logger.Debug.Printf("execute TlcAndGroupControl %v", t)
+	if t.command == 2 {
+		hardware.SetTLC(t.watchdog, t.ctrlSG)
+		return
+	}
+	hardware.CommandUtopia(t.command, 0)
+}
 func (t *TlcAndGroupControl) toData() []byte {
 	t.lastop = time.Now()
 	result := make([]byte, 0)
@@ -74,6 +85,10 @@ type CountDown struct {
 	// Ожидаемое время устанавливается равным 255, если сигнальная группа не доступна.
 }
 
+func (c *CountDown) execute() {
+	logger.Debug.Printf("execute CountDown %v", c)
+}
+
 func (c *CountDown) toData() []byte {
 	c.lastop = time.Now()
 	result := make([]byte, 0)
@@ -111,6 +126,11 @@ type ExtendedCountDown struct {
 	count [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
 	//Время работы (в секундах, до следующего изменения командой).
 	// Ожидаемое время устанавливается равным 255, если сигнальная группа не доступна.
+}
+
+func (e *ExtendedCountDown) execute() {
+	logger.Debug.Printf("execute ExtendedCountDown %v", e)
+
 }
 
 func (e *ExtendedCountDown) toData() []byte {

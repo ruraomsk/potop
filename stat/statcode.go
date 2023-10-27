@@ -7,7 +7,7 @@ import (
 )
 
 var InStat chan OneTick
-var Statistics Chanels
+var Statistics = Chanels{chanels: make(map[int]*OneChanel)}
 
 func Start(chanels int, diaps int) {
 	InStat = make(chan OneTick, 100)

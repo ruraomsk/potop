@@ -12,6 +12,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/hardware"
 	"github.com/ruraomsk/potop/radar"
 	"github.com/ruraomsk/potop/setup"
 	"github.com/ruraomsk/potop/stat"
@@ -41,6 +42,8 @@ func main() {
 	fmt.Println("Potop start")
 	logger.Info.Println("Potop start")
 	go utopia.Transport()
+	go hardware.Start()
+
 	time.Sleep(time.Second)
 	if setup.Set.Utopia.Debug {
 		go utopia.Server()

@@ -56,16 +56,14 @@ func Transport() {
 	toController = make(chan []byte)
 	toServer = make(chan []byte)
 	if setup.Set.Utopia.Debug {
-		statusTransport.Connect = true
+		statusTransport.setConnect(true)
 		for {
-			select {
-			case u := <-toController:
-				statusTransport.setFromServer(u)
-				fromServer <- u
-			case u := <-toServer:
-				statusTransport.setToServer(u)
-				fromController <- u
-			}
+			u := <-toController
+			statusTransport.setFromServer(u)
+			fromServer <- u
+			u = <-toServer
+			statusTransport.setToServer(u)
+			fromController <- u
 		}
 	}
 	count := 0

@@ -11,7 +11,7 @@ import (
 var HoldsCmd chan WriteHolds
 var CoilsCmd chan WriteCoils
 
-var state = StateHard{Connect: false}
+var state = StateHard{Connect: false, Status: make([]byte, 3)}
 var client *modbus.ModbusClient
 var err error
 
@@ -67,6 +67,7 @@ func Start() {
 				}
 			}
 		case wc := <-CoilsCmd:
+			logger.Debug.Printf("coils cmd %v", wc)
 			if state.getConnect() {
 				err = client.WriteCoils(wc.Start, wc.Data)
 				if err != nil {
@@ -76,6 +77,7 @@ func Start() {
 				}
 			}
 		case wh := <-HoldsCmd:
+			logger.Debug.Printf("holds cmd %v", wh)
 			if state.getConnect() {
 				err = client.WriteRegisters(wh.Start, wh.Data)
 				if err != nil {

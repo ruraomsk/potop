@@ -39,10 +39,73 @@ import (
 
 var serv = ServerUtopia{id: 1, lastACK: 0}
 
+func listenController() {
+	for {
+		serv.input = <-fromController
+		// fmt.Printf("-> % 02X \n", serv.input)
+		if err := serv.verify(); err != nil {
+			serv.sendNACK()
+			logger.Error.Print(err.Error())
+			continue
+		}
+		if serv.isNak() {
+			//Повторим предыдущее сообшение
+			logger.Error.Printf("Повторяем сообщение % 02X", serv.output)
+			toController <- serv.output
+			continue
+		}
+		if serv.isLive() {
+			continue
+		}
+		// fmt.Printf("serv  % 02X \n", serv.data)
+		switch serv.input[6] {
+		case 190:
+			err := serv.StatusAndDetections.fromData(serv.data)
+			if err != nil {
+				logger.Error.Print(err.Error())
+			}
+		case 4:
+			err := serv.SignalGroupFeedback.fromData(serv.data)
+			if err != nil {
+				logger.Error.Print(err.Error())
+			}
+		case 5:
+			err := serv.ExtendedDiagnostic.fromData(serv.data)
+			if err != nil {
+				logger.Error.Print(err.Error())
+			}
+		case 24:
+			err := serv.ClassifiedCounts.fromData(serv.data)
+			if err != nil {
+				logger.Error.Print(err.Error())
+			}
+		case 25:
+			err := serv.ClassifiedSpeeds.fromData(serv.data)
+			if err != nil {
+				logger.Error.Print(err.Error())
+			}
+		case 7:
+			err := serv.ReplaySpecial.fromData(serv.data)
+			if err != nil {
+				logger.Error.Print(err.Error())
+			}
+		case 1:
+			err := serv.BusDetection.fromData(serv.data)
+			if err != nil {
+				logger.Error.Print(err.Error())
+			}
+
+		default:
+			logger.Error.Printf("Неопознанный ответ от контроллера %d", serv.input[6])
+		}
+
+	}
+}
 func Server() {
 	if !setup.Set.Debug {
 		return
 	}
+	go listenController()
 	ticker := time.NewTicker(time.Second)
 	sendTLC := time.NewTicker(10 * time.Second)
 	sendCountDown := time.NewTicker(5 * time.Second)
@@ -78,63 +141,6 @@ func Server() {
 		case <-sendDiagnostic.C:
 			serv.sendCommand(serv.DiagnosticRequest.toData())
 
-		case serv.input = <-fromController:
-			// fmt.Printf("-> % 02X \n", serv.input)
-			if err := serv.verify(); err != nil {
-				serv.sendNACK()
-				logger.Error.Print(err.Error())
-				continue
-			}
-			if serv.isNak() {
-				//Повторим предыдущее сообшение
-				logger.Error.Printf("Повторяем сообщение % 02X", serv.output)
-				toController <- serv.output
-				continue
-			}
-			if serv.isLive() {
-				continue
-			}
-			// fmt.Printf("serv  % 02X \n", serv.data)
-			switch serv.input[6] {
-			case 190:
-				err := serv.StatusAndDetections.fromData(serv.data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-				}
-			case 4:
-				err := serv.SignalGroupFeedback.fromData(serv.data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-				}
-			case 5:
-				err := serv.ExtendedDiagnostic.fromData(serv.data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-				}
-			case 24:
-				err := serv.ClassifiedCounts.fromData(serv.data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-				}
-			case 25:
-				err := serv.ClassifiedSpeeds.fromData(serv.data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-				}
-			case 7:
-				err := serv.ReplaySpecial.fromData(serv.data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-				}
-			case 1:
-				err := serv.BusDetection.fromData(serv.data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-				}
-
-			default:
-				logger.Error.Printf("Неопознанный ответ от контроллера %d", serv.input[6])
-			}
 		}
 
 	}

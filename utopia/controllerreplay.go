@@ -3,6 +3,10 @@ package utopia
 import (
 	"fmt"
 	"time"
+
+	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/hardware"
+	"github.com/ruraomsk/potop/stat"
 )
 
 // Controller Message 190 - Status and detections: message
@@ -26,6 +30,22 @@ type StatusAndDetections struct {
 type sensor struct {
 	counts    int //Проехало за последний период
 	occupancy int
+}
+
+func (s *StatusAndDetections) fill() {
+	logger.Debug.Printf("fill StatusAndDetections")
+	s.TLCbasic = hardware.GetDiagnosticUtopia()
+	s.TLCstatus = hardware.GetStatusUtopia()
+	s.plan = hardware.GetPlan()
+	for i, v := range stat.GetCountValues() {
+		s.sensors[i].counts = v
+		if v != 0 {
+			s.sensors[i].occupancy = 1
+		} else {
+			s.sensors[i].occupancy = 0
+		}
+	}
+	stat.ClearCountValues()
 }
 
 func (s *StatusAndDetections) toData() []byte {
@@ -69,6 +89,13 @@ type SignalGroupFeedback struct {
 	// Ждущий зеленый 									0хB
 	// Неработающий 									0хE
 	// Группа не определена								0хF
+}
+
+func (s *SignalGroupFeedback) fill() {
+	logger.Debug.Printf("fill SignalGroupFeedback")
+	for i, v := range hardware.GetStatusDirs() {
+		s.states[i] = int(v)
+	}
 }
 
 func (s *SignalGroupFeedback) toData() []byte {
@@ -116,7 +143,7 @@ type ExtError struct {
 	code [3]byte
 }
 
-func (e *ExtendedDiagnostic) new() {
+func (e *ExtendedDiagnostic) fill() {
 	e.lastop = time.Now()
 	e.Extrrors = make([]ExtError, 0)
 	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 1, 0}})
@@ -164,7 +191,9 @@ type Sensor struct {
 	counts []int
 }
 
-func (c *ClassifiedCounts) new(classes int, sensors int) {
+func (c *ClassifiedCounts) fill() {
+	classes := 5
+	sensors := 10
 	c.lastop = time.Now()
 	c.LCLASSES = classes
 	c.LSENSORS = sensors
@@ -217,7 +246,9 @@ type ClassifiedSpeeds struct {
 	Sensors  []Sensor
 }
 
-func (c *ClassifiedSpeeds) new(classes int, sensors int) {
+func (c *ClassifiedSpeeds) fill() {
+	classes := 5
+	sensors := 5
 	c.lastop = time.Now()
 	c.LCLASSES = classes
 	c.LSENSORS = sensors
@@ -275,6 +306,10 @@ type BusDetection struct {
 	Doors           int
 }
 
+func (b *BusDetection) fill() {
+	logger.Debug.Printf("fill BusDetection %v", b)
+}
+
 func (b *BusDetection) toData() []byte {
 	b.lastop = time.Now()
 	result := make([]byte, 0)
@@ -307,6 +342,10 @@ func (b *BusDetection) fromData(data []byte) error {
 type ReplaySpecial struct {
 	lastop        time.Time
 	CommandReplay int
+}
+
+func (s *ReplaySpecial) fill() {
+	logger.Debug.Printf("fill ReplaySpecial %v", s)
 }
 
 func (s *ReplaySpecial) toData() []byte {

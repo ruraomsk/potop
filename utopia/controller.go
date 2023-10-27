@@ -67,7 +67,8 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
-
+			ctrl.TlcAndGroupControl.execute()
+			ctrl.StatusAndDetections.fill()
 			ctrl.sendReplay(ctrl.StatusAndDetections.toData())
 		case 8:
 			// Message 8 – Signal group count-down
@@ -75,6 +76,8 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
+			ctrl.CountDown.execute()
+			ctrl.SignalGroupFeedback.fill()
 			ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
 		case 9:
 			// Message 9 – Signal group extended count-down
@@ -82,6 +85,8 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
+			ctrl.ExtendedCountDown.execute()
+			ctrl.SignalGroupFeedback.fill()
 			ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
 		case 3:
 			// Message 3 – Date and time setting
@@ -97,7 +102,7 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
-			ctrl.ExtendedDiagnostic.new()
+			ctrl.ExtendedDiagnostic.fill()
 			ctrl.sendReplay(ctrl.ExtendedDiagnostic.toData())
 		case 24:
 			// Message 24 – Request for classified counts by vehicle length
@@ -105,7 +110,7 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
-			ctrl.ClassifiedCounts.new(5, 5)
+			ctrl.ClassifiedCounts.fill()
 			ctrl.sendReplay(ctrl.ClassifiedCounts.toData())
 		case 25:
 			// Message 25 – Request for classified counts by vehicle speed
@@ -113,7 +118,7 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
-			ctrl.ClassifiedSpeeds.new(5, 5)
+			ctrl.ClassifiedSpeeds.fill()
 			ctrl.sendReplay(ctrl.ClassifiedSpeeds.toData())
 		case 6:
 			// Message 6 - Special commands
@@ -121,6 +126,7 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
+			ctrl.ReplaySpecial.fill()
 			ctrl.sendReplay(ctrl.ReplaySpecial.toData())
 		case 23:
 			// Message 23 – Bus prediction
@@ -128,9 +134,10 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
+			ctrl.BusDetection.fill()
 			ctrl.sendReplay(ctrl.BusDetection.toData())
 		default:
-			logger.Error.Printf("Неопознанный сщщьщение от сервера %d", ctrl.input[6])
+			logger.Error.Printf("Неопознанное сообщение от сервера %d", ctrl.input[6])
 		}
 	}
 }
