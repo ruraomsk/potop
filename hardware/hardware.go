@@ -1,6 +1,7 @@
 package hardware
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
@@ -11,7 +12,7 @@ import (
 var HoldsCmd chan WriteHolds
 var CoilsCmd chan WriteCoils
 
-var state = StateHard{Connect: false, Status: make([]byte, 3)}
+var state = StateHard{Connect: false, Status: make([]byte, 4)}
 var client *modbus.ModbusClient
 var err error
 
@@ -97,13 +98,13 @@ func readStatus() error {
 		state.WatchDog--
 		err := client.WriteRegister(178, state.WatchDog)
 		if err != nil {
-			return err
+			return fmt.Errorf("write holds 178 %s", err.Error())
 		}
 	}
 	//Считываем состояние направлений
 	data, err := client.ReadRegisters(190, 32, modbus.HOLDING_REGISTER)
 	if err != nil {
-		return err
+		return fmt.Errorf("read holds 190 32 %s", err.Error())
 	}
 	for i, v := range data {
 		state.StatusDirs[i] = uint8(v)
@@ -111,7 +112,7 @@ func readStatus() error {
 	//Обновляем статус КДМ в его кодах
 	status, err := client.ReadRegisters(0, 4, modbus.HOLDING_REGISTER)
 	if err != nil {
-		return err
+		return fmt.Errorf("read holds 0 4 %s", err.Error())
 	}
 	for i, v := range status {
 		state.Status[i] = uint8(v)
@@ -119,7 +120,7 @@ func readStatus() error {
 	//Обновляем информацию о спец режимах
 	coils, err := client.ReadCoils(0, 3)
 	if err != nil {
-		return err
+		return fmt.Errorf("read coils 0 3 %s", err.Error())
 	}
 
 	state.Dark = coils[0]

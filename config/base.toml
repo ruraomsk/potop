@@ -3,7 +3,7 @@ debug = true
 
 [utopia]
 debug = true               #если истина то запускать имитатор 
-device = "rtu:///dev/com2"
+device = "rtu:///dev/com0"
 baudrate = 38400
 
 [modbus]
@@ -12,7 +12,7 @@ baudrate = 38400
 device = "rtu:///dev/com1"
 baudrate = 19200
 parity = "N"
-uid = 247
+uid = 1
 
 [trafficdata]
 work = false
