@@ -1,46 +1,81 @@
 package utopia
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/hardware"
 )
 
 // From Spot to the controller					Reply from controller
 // __________________________________________________________________________________
 // TLC and group control: message 2				Status and detections: message 190
 // (every second)
-//___________________________________________________________________________________
+// ___________________________________________________________________________________
 // Signal group count-down: message 8			Signal group feedback: message 4
 // (every second)
 // Extended count-down: message 9
 // (every second)
-//___________________________________________________________________________________
+// ___________________________________________________________________________________
 // Diagnostic request: message 0				Extended diagnostic: message 5
 // (event driven)
-//___________________________________________________________________________________
+// ___________________________________________________________________________________
 // Classified counts / vehicle length data		Classified counts / vehicle length data:
 // request: message 24							message 24
 // (periodic, default = 1 minute)
-//___________________________________________________________________________________
+// ___________________________________________________________________________________
 // Classified counts / vehicle speed data		Classified counts / vehicle length data:
 // request: message 25							message 25
 // (periodic, default = 1 minute)
-//___________________________________________________________________________________
+// ___________________________________________________________________________________
 // Special commands: message 6					Reply to a command: message 7
-//___________________________________________________________________________________
+// ___________________________________________________________________________________
 // Bus prediction: message 23					Bus detection: message 1
 // (event driven)								or
 // Time setting: message 3						Empty message (acknowledge)
 // (periodic, default = 5 minutes)
 // Empty message (polling)
-//___________________________________________________________________________________
+// ___________________________________________________________________________________
 
 var ctrl = ControllerUtopia{id: 1, lastACK: 0, input: make([]byte, 0), output: make([]byte, 0)}
 
+func getDuration() time.Duration {
+	return 5 * time.Second
+}
+
+var live chan any
+
+func controlUtopiaServer() {
+	var timer *time.Timer
+	hardware.SetWork <- 0
+	logger.Info.Print("Нет управления от utopia")
+	for {
+		<-live
+		hardware.SetWork <- 1
+		timer = time.NewTimer(getDuration())
+		logger.Info.Print("Есть управление от utopia")
+		hardware.SetWork <- 1
+	loop:
+		for {
+			select {
+			case <-timer.C:
+				hardware.SetWork <- 0
+				break loop
+			case <-live:
+				timer.Stop()
+				timer = time.NewTimer(getDuration())
+			}
+		}
+		logger.Error.Print("Погеряно управление от utopia")
+	}
+
+}
 func Controller() {
+	live = make(chan any)
+	go controlUtopiaServer()
 	for {
 		ctrl.input = <-fromServer
+		live <- 0
 		if err := ctrl.verify(); err != nil {
 			ctrl.sendNACK()
 			logger.Error.Print(err.Error())
@@ -94,7 +129,7 @@ func Controller() {
 			if err != nil {
 				logger.Error.Print(err.Error())
 			}
-			fmt.Println(ctrl.DateAndTime.DateTime.String())
+			// fmt.Println(ctrl.DateAndTime.DateTime.String())
 			ctrl.sendLive()
 		case 0:
 			// Message 0 – Diagnostic request message

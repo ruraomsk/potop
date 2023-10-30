@@ -70,10 +70,10 @@ func Transport() {
 	config := serial.Config{Address: setup.Set.Utopia.Device, BaudRate: setup.Set.Utopia.BaudRate}
 	for {
 		if !statusTransport.getConnect() {
-			time.Sleep(time.Second)
+			time.Sleep(5 * time.Second)
 			port, err = serial.Open(&config)
 			if err != nil {
-				if (count % 1000) == 0 {
+				if (count % 100) == 0 {
 					logger.Error.Printf("spot open port %v", err.Error())
 				}
 				count++

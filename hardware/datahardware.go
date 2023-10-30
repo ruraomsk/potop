@@ -1,6 +1,8 @@
 package hardware
 
-import "sync"
+import (
+	"time"
+)
 
 type WriteHolds struct {
 	Start uint16
@@ -12,13 +14,14 @@ type WriteCoils struct {
 }
 
 type StateHard struct {
-	mutex    sync.Mutex
-	Connect  bool   //true если есть связь с КДМ
-	Dark     bool   //true если Режим ОС
-	AllRed   bool   //true если Режим Кругом Красный
-	Flashing bool   //true если Режим Желтый Мигающий
-	WatchDog uint16 //Текущий Тайм аут управления
-	Plan     int    //Номер исполняемого плана контроллером КДМ
+	Utopia        bool //true управляение утопией false - локальное управление
+	LastOperation time.Time
+	Connect       bool   //true если есть связь с КДМ
+	Dark          bool   //true если Режим ОС
+	AllRed        bool   //true если Режим Кругом Красный
+	Flashing      bool   //true если Режим Желтый Мигающий
+	WatchDog      uint16 //Текущий Тайм аут управления
+	Plan          int    //Номер исполняемого плана контроллером КДМ
 	// typedef enum {					//Идентификаторы событий в логе аварий и в регистре событий
 	// 	ALL_IS_GOOD = 0,			//Все хорошо, нет предупреждений
 	// 	LOW_CURRENT_RED_LAMP,			//Ток через открытый ключ меньше минимального - лампа сгорела, применяется при контроле красных
@@ -54,25 +57,51 @@ type StateHard struct {
 	//   ZM_YELLOW_BLINK=9, //желтый мигающий в режиме ЖМ
 	//   OS_OFF=10,	//сигналы выключены в режиме ОС
 	//   UNUSED=11 //неиспользуемое направление
+	Tmin         int    //Последнее заданное Тмин вызвать направления
+	MaskCommand  uint32 //Последняя маска
+	RealWatchDog uint16 //Остаток watchdog
 }
 
-func (s *StateHard) getConnect() bool {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+func (s *StateHard) GetConnect() bool {
+	mutex.Lock()
+	defer mutex.Unlock()
 	return s.Connect
 }
+func (s *StateHard) GetConnectUtopia() bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return s.Utopia
+}
+
 func (s *StateHard) setConnect(set bool) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 	s.Connect = set
 }
+func (s *StateHard) getUtopia() bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return s.Utopia
+}
+func (s *StateHard) setUtopia(set bool) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.Utopia = set
+}
+
+func (s *StateHard) setLastOperation() {
+	mutex.Lock()
+	defer mutex.Unlock()
+	s.LastOperation = time.Now()
+}
+
 func SetTLC(watchdog int, sgc [64]bool) {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-	if !state.Connect {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if !StateHardware.Connect {
 		return
 	}
-	state.WatchDog = uint16(watchdog)
+	StateHardware.WatchDog = uint16(watchdog)
 	wh := WriteHolds{Start: 175, Data: make([]uint16, 4)}
 	b := make([]byte, 4)
 	j := 0
@@ -96,24 +125,24 @@ func SetTLC(watchdog int, sgc [64]bool) {
 	wh.Data[0] = uint16(watchdog)
 	wh.Data[3] = uint16(watchdog)
 
-	if state.Dark || state.Flashing || state.AllRed {
+	if StateHardware.Dark || StateHardware.Flashing || StateHardware.AllRed {
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 	}
 
 	HoldsCmd <- wh
 }
 func GetPlan() int {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	return state.Plan
+	return StateHardware.Plan
 }
 func GetStatusDirs() []uint8 {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 	result := make([]uint8, 0)
 	var b uint8
-	for _, v := range state.StatusDirs {
+	for _, v := range StateHardware.StatusDirs {
 		switch v {
 		//   OFF = 0, //все сигналы выключены
 		case 0:
@@ -160,64 +189,64 @@ func GetStatusDirs() []uint8 {
 }
 
 func GetStatusUtopia() byte {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-	if state.Dark {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if StateHardware.Dark {
 		return 6
 	}
-	if state.Flashing {
+	if StateHardware.Flashing {
 		return 3
 	}
-	if state.AllRed {
+	if StateHardware.AllRed {
 		return 4
 	}
-	if state.WatchDog == 0 {
+	if StateHardware.WatchDog == 0 {
 		return 1
 	}
-	if state.WatchDog != 0 {
+	if StateHardware.WatchDog != 0 {
 		return 2
 	}
 	return 5
 }
 func GetDiagnosticUtopia() byte {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 	result := byte(0)
 	//bit01 (0x02): “communication error”
-	if !state.Connect {
+	if !StateHardware.Connect {
 		result |= 2
 		return result
 	}
-	if state.WatchDog == 0 {
+	if StateHardware.WatchDog == 0 {
 		result |= 1
 	}
-	if state.Status[0] == 0 {
+	if StateHardware.Status[0] == 0 {
 		return result
 	}
 	// bit02 (0x04): “conflicting signal group command”
-	if state.Status[0] == 10 || state.Status[0] == 11 {
+	if StateHardware.Status[0] == 10 || StateHardware.Status[0] == 11 {
 		result |= 0x04
 	}
 	//  bit03 (0x08): “centralisation inhibited”
 	//  bit04 (0x10): “inter-green violation”
-	if state.Status[0] == 2 {
+	if StateHardware.Status[0] == 2 {
 		result |= 0x10
 	}
 	//  bit05 (0x20): “lamp fault”
-	if state.Status[0] == 1 {
+	if StateHardware.Status[0] == 1 {
 		result |= 0x20
 	}
 	//  bit06 (0x40): [not used]
 	//  bit07 (0x80): “extended diagnostics update”
-	if state.Status[0] >= 3 && state.Status[0] <= 9 {
+	if StateHardware.Status[0] >= 3 && StateHardware.Status[0] <= 9 {
 		result |= 0x80
 	}
 	return result
 }
 func CommandUtopia(cmd int, plan int) {
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-	if !state.Connect {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if !StateHardware.Connect {
 		return
 	}
 	switch cmd {
@@ -229,28 +258,33 @@ func CommandUtopia(cmd int, plan int) {
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 	case 3:
 		//Переход в  режим ЖМ
-		if !state.Flashing {
+		if !StateHardware.Flashing {
 			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, true}}
 		}
 	case 4:
 		//Переход в  режим КК
-		if !state.AllRed {
+		if !StateHardware.AllRed {
 			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, true, false}}
 		}
 	case 6:
 		//Переход в  режим ОС
-		if !state.Dark {
+		if !StateHardware.Dark {
 			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{true, false, false}}
 		}
 	case 7:
 		//Хочет включить план координации
-		if state.Dark || state.Flashing || state.AllRed {
+		if StateHardware.Dark || StateHardware.Flashing || StateHardware.AllRed {
 			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 		}
-		if state.WatchDog != 0 {
-			state.WatchDog = 0
+		if StateHardware.WatchDog != 0 {
+			StateHardware.WatchDog = 0
 			HoldsCmd <- WriteHolds{Start: 178, Data: []uint16{0}}
 		}
 		HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{uint16(plan)}}
 	}
+}
+func GetStateHard() StateHard {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return StateHardware
 }

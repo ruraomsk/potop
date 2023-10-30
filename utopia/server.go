@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
-	"github.com/ruraomsk/potop/setup"
 )
 
 // From Spot to the controller					Reply from controller
@@ -102,9 +101,6 @@ func listenController() {
 	}
 }
 func Server() {
-	if !setup.Set.Debug {
-		return
-	}
 	go listenController()
 	ticker := time.NewTicker(time.Second)
 	sendTLC := time.NewTicker(10 * time.Second)
@@ -124,6 +120,8 @@ func Server() {
 			serv.DateAndTime.DateTime = time.Now()
 			serv.sendCommand(serv.DateAndTime.toData())
 		case <-sendTLC.C:
+			serv.TlcAndGroupControl.command = 2
+			serv.TlcAndGroupControl.watchdog = 20
 			serv.sendCommand(serv.TlcAndGroupControl.toData())
 
 		case <-sendCountDown.C:
@@ -140,7 +138,6 @@ func Server() {
 			serv.sendCommand(serv.SpecialCommands.toData())
 		case <-sendDiagnostic.C:
 			serv.sendCommand(serv.DiagnosticRequest.toData())
-
 		}
 
 	}

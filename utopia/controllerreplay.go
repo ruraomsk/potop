@@ -33,7 +33,6 @@ type sensor struct {
 }
 
 func (s *StatusAndDetections) fill() {
-	logger.Debug.Printf("fill StatusAndDetections")
 	s.TLCbasic = hardware.GetDiagnosticUtopia()
 	s.TLCstatus = hardware.GetStatusUtopia()
 	s.plan = hardware.GetPlan()
@@ -46,6 +45,7 @@ func (s *StatusAndDetections) fill() {
 		}
 	}
 	stat.ClearCountValues()
+	logger.Debug.Printf("fill StatusAndDetections %v", s)
 }
 
 func (s *StatusAndDetections) toData() []byte {
@@ -92,10 +92,10 @@ type SignalGroupFeedback struct {
 }
 
 func (s *SignalGroupFeedback) fill() {
-	logger.Debug.Printf("fill SignalGroupFeedback")
 	for i, v := range hardware.GetStatusDirs() {
 		s.states[i] = int(v)
 	}
+	logger.Debug.Printf("fill SignalGroupFeedback %v", s)
 }
 
 func (s *SignalGroupFeedback) toData() []byte {
@@ -307,7 +307,7 @@ type BusDetection struct {
 }
 
 func (b *BusDetection) fill() {
-	logger.Debug.Printf("fill BusDetection %v", b)
+	// logger.Debug.Printf("fill BusDetection %v", b)
 }
 
 func (b *BusDetection) toData() []byte {
@@ -345,7 +345,7 @@ type ReplaySpecial struct {
 }
 
 func (s *ReplaySpecial) fill() {
-	logger.Debug.Printf("fill ReplaySpecial %v", s)
+	// logger.Debug.Printf("fill ReplaySpecial %v", s)
 }
 
 func (s *ReplaySpecial) toData() []byte {

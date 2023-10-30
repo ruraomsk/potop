@@ -1,12 +1,13 @@
 package setup
 
 var (
-	Set *Setup
+	Set    *Setup
+	ExtSet *ExtSetup
 )
 
 type Setup struct {
 	LogPath     string      `toml:"logpath"`
-	Debug       bool        `toml:"debug"`
+	Id          int         `toml:"id"`
 	Modbus      Modbus      `toml:"modbus"`
 	Utopia      Utopia      `toml:"utopia"`
 	TrafficData TrafficData `toml:"trafficdata"`
@@ -31,11 +32,12 @@ type ModbusRadar struct {
 }
 
 type Utopia struct {
-	Device   string `toml:"device" json:"device"`
-	BaudRate int    `toml:"baudrate" json:"baudrate"`
-	Parity   string `toml:"parity" json:"parity"`
-	UId      int    `toml:"uid" json:"uid"`
-	Debug    bool   `toml:"debug" json:"debug"`
+	Device      string `toml:"device" json:"device"`
+	BaudRate    int    `toml:"baudrate" json:"baudrate"`
+	Parity      string `toml:"parity" json:"parity"`
+	UId         int    `toml:"uid" json:"uid"`
+	Debug       bool   `toml:"debug" json:"debug"`
+	LostControl int    `toml:"lostControl" json:"lostControl"`
 }
 type TrafficData struct {
 	Work    bool   `toml:"work" json:"work"`

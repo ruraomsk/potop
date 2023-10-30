@@ -2,16 +2,14 @@ package utopia
 
 import (
 	"fmt"
-	"time"
 )
 
 type ControllerUtopia struct {
-	id       byte      //Идентификатор контроллера
-	lastACK  byte      //Предыдущий АСК
-	input    []byte    //Принято от сервера
-	output   []byte    //Передано на сервер
-	data     []byte    //Вычитанные чистые данные
-	lastTime time.Time //Последний прием от сервера
+	id      byte   //Идентификатор контроллера
+	lastACK byte   //Предыдущий АСК
+	input   []byte //Принято от сервера
+	output  []byte //Передано на сервер
+	data    []byte //Вычитанные чистые данные
 	//Запросы сервера
 	TlcAndGroupControl  TlcAndGroupControl  // Spot TLC and group control (2)
 	CountDown           CountDown           // Spot Message 8  – Signal group count-down, управление сигнальными группами

@@ -1,7 +1,11 @@
 github.com/BurntSushi/toml v1.3.2 h1:o7IhLm0Msx3BaB+n3Ag7L8EVlByGnpq14C4YWiu/gL8=
 github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/anoshenko/rui v0.13.0 h1:wT1NF0khGmlf7FI8Fge+Ng4DSMgb82t7tMulpk5DkeE=
+github.com/anoshenko/rui v0.13.0/go.mod h1:EXlGPrq8D7J738nnb1F1J2uXqczn+brP5VPDusvCmAQ=
 github.com/goburrow/serial v0.1.0 h1:v2T1SQa/dlUqQiYIT8+Cu7YolfqAi3K96UmhwYyuSrA=
 github.com/goburrow/serial v0.1.0/go.mod h1:sAiqG0nRVswsm1C97xsttiYCzSLBmUZ/VSlVLZJ8haA=
+github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
+github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/ruraomsk/ag-server v0.0.0-20231010104045-cf659ec9fe61 h1:73rTko92sCLDVM5VRCsk9+urj2YC1tukeqmdbrEhkjE=
 github.com/ruraomsk/ag-server v0.0.0-20231010104045-cf659ec9fe61/go.mod h1:MpuTy+cjEIJ11T6mZ8/WWQS/RdnowVzDoEO9Mwyin0o=
 github.com/simonvetter/modbus v1.6.0 h1:RDHJevtc7LDIVoHAbhDun8fy+QwnGe+ZU+sLm9ZZzjc=
