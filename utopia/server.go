@@ -1,6 +1,7 @@
 package utopia
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
@@ -120,11 +121,21 @@ func Server() {
 			serv.DateAndTime.DateTime = time.Now()
 			serv.sendCommand(serv.DateAndTime.toData())
 		case <-sendTLC.C:
-			serv.TlcAndGroupControl.command = 2
-			serv.TlcAndGroupControl.watchdog = 20
+			serv.TlcAndGroupControl.command = rand.Intn(7)
+			serv.TlcAndGroupControl.watchdog = rand.Intn(60)
+			for i := 0; i < len(serv.TlcAndGroupControl.ctrlSG); i++ {
+				if rand.Intn(10) < 5 {
+					serv.TlcAndGroupControl.ctrlSG[i] = false
+				} else {
+					serv.TlcAndGroupControl.ctrlSG[i] = true
+				}
+			}
 			serv.sendCommand(serv.TlcAndGroupControl.toData())
 
 		case <-sendCountDown.C:
+			for i := 0; i < len(serv.CountDown.count); i++ {
+				serv.CountDown.count[i] = byte(rand.Intn(255))
+			}
 			serv.sendCommand(serv.CountDown.toData())
 		case <-sendExtebdedCountDown.C:
 			serv.sendCommand(serv.ExtendedCountDown.toData())

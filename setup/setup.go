@@ -54,6 +54,7 @@ type Modbus struct {
 	BaudRate int    `toml:"baudrate" json:"baudrate"`
 	Parity   string `toml:"parity" json:"parity"`
 	UId      int    `toml:"uid" json:"uid"`
+	Debug    bool   `toml:"debug" json:"debug"`
 }
 
 func (s *Setup) Update(es ExtSetup) {

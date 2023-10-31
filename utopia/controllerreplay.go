@@ -84,12 +84,16 @@ func (s *StatusAndDetections) fill() {
 	s.TLCbasic = hardware.GetDiagnosticUtopia()
 	s.TLCstatus = hardware.GetStatusUtopia()
 	s.plan = hardware.GetPlan()
+	for i := 0; i < len(s.sensors); i++ {
+		s.sensors[i].counts = 0xff
+		s.sensors[i].occupancy = 0xff
+	}
 	for i, v := range stat.GetCountValues() {
 		s.sensors[i].counts = v
-		if v != 0 {
-			s.sensors[i].occupancy = 1
-		} else {
+		if v == 0 {
 			s.sensors[i].occupancy = 0
+		} else {
+			s.sensors[i].occupancy = 1
 		}
 	}
 	stat.ClearCountValues()
@@ -144,6 +148,9 @@ func (s *SignalGroupFeedback) ToString() string {
 }
 
 func (s *SignalGroupFeedback) fill() {
+	for i := 0; i < len(s.states); i++ {
+		s.states[i] = 255
+	}
 	for i, v := range hardware.GetStatusDirs() {
 		s.states[i] = int(v)
 	}

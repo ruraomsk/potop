@@ -14,6 +14,7 @@ device = "rtu:///dev/com1"
 baudrate = 19200
 parity = "N"
 uid = 1
+debug = true
 
 [trafficdata]
 work = false

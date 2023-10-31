@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -26,6 +27,7 @@ func Start() {
 	SetWork = make(chan int)
 	tickerConnect := time.NewTicker(5 * time.Second)
 	tickerStatus := time.NewTicker(time.Second)
+	tickerDebug := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-tickerConnect.C:
@@ -77,7 +79,12 @@ func Start() {
 					StateHardware.setConnect(false)
 				}
 			}
-
+		case <-tickerDebug.C:
+			if setup.Set.Modbus.Debug {
+				fillDebugData(StateHardware.getUtopia())
+			} else {
+				tickerDebug.Stop()
+			}
 		case wc := <-CoilsCmd:
 			logger.Debug.Printf("coils cmd %v", wc)
 			if StateHardware.GetConnect() {
@@ -157,4 +164,45 @@ func readStatus(utopia bool) error {
 	StateHardware.RealWatchDog = utopiacmd[3]
 	StateHardware.MaskCommand = uint32(utopiacmd[1])<<16 | uint32(utopiacmd[2])
 	return nil
+}
+func fillDebugData(utopia bool) {
+	if !utopia {
+		//utopia отключена
+		StateHardware.WatchDog = 0
+	}
+	//Обновляем wtchdog если нужно
+	if StateHardware.WatchDog > 0 {
+		StateHardware.WatchDog--
+	}
+	//Считываем состояние направлений
+	data := make([]uint16, 0)
+	for i := 0; i < 32; i++ {
+		data = append(data, uint16(rand.Intn(11)))
+	}
+	for i, v := range data {
+		StateHardware.StatusDirs[i] = uint8(v)
+	}
+	//Обновляем статус КДМ в его кодах
+	status := []uint16{uint16(rand.Intn(12)), uint16(rand.Intn(10)), uint16(rand.Intn(10)), uint16(rand.Intn(10))}
+	for i, v := range status {
+		StateHardware.Status[i] = uint8(v)
+	}
+	//Обновляем информацию о спец режимах
+	coils := make([]bool, 3)
+	for i := 0; i < 3; i++ {
+		if rand.Intn(10) < 5 {
+			coils = append(coils, false)
+		} else {
+			coils = append(coils, true)
+		}
+	}
+
+	StateHardware.Dark = coils[0]
+	StateHardware.AllRed = coils[1]
+	StateHardware.Flashing = coils[2]
+
+	StateHardware.Tmin = rand.Intn(50)
+	StateHardware.RealWatchDog = uint16(rand.Intn(50))
+	StateHardware.MaskCommand = uint32(rand.Intn(32000))<<16 | uint32(rand.Intn(32000))
+
 }
