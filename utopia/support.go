@@ -1,5 +1,13 @@
 package utopia
 
+import (
+	"fmt"
+	"time"
+)
+
+func toString(t time.Time) string {
+	return fmt.Sprintf("%02d:%02d:%02d", t.Hour(), t.Minute(), t.Second())
+}
 func bcc8(b byte, check uint16) uint16 {
 	if b != 0 {
 		var rbit uint16

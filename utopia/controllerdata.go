@@ -15,7 +15,7 @@ type ControllerUtopia struct {
 	CountDown           CountDown           // Spot Message 8  – Signal group count-down, управление сигнальными группами
 	ExtendedCountDown   ExtendedCountDown   // Spot Message 9  – Extended Signal group count-down, управление сигнальными группами
 	DiagnosticRequest   DiagnosticRequest   // Message 0 – Diagnostic request message
-	ReqClassifiedLenght ReqClassifiedLenght // Message 24 – Request for classified counts by vehicle length
+	ReqClassifiedLenght ReqClassifiedLength // Message 24 – Request for classified counts by vehicle length
 	ReqClassifiedSpeed  ReqClassifiedSpeed  // Message 25 – Request for classified counts by vehicle speed
 	BusPrediction       BusPrediction       // Message 23 – Bus prediction
 	DateAndTime         DateAndTime         // Message 3 – Date and time setting
@@ -60,17 +60,17 @@ func (c *ControllerUtopia) sendMessage(cnt byte, message []byte) {
 }
 func (c *ControllerUtopia) verify() error {
 	if c.input[0] != 1 || (c.input[1]+c.input[2]) != 0xff {
-		return fmt.Errorf("Неверный признак сообшения от СПОТ")
+		return fmt.Errorf("неверный признак сообшения от спот")
 	}
 	if c.input[3] != 0 {
-		return fmt.Errorf("Неверный ORG СПОТ")
+		return fmt.Errorf("неверный ORG СПОТ")
 	}
 	if c.input[4] != 6 && c.input[4] != 8 {
-		return fmt.Errorf("Неверный тип сообщения")
+		return fmt.Errorf("неверный тип сообщения")
 	}
 	l := int(c.input[5]) + 9
 	if l != len(c.input) {
-		return fmt.Errorf("Неверная длина сообщения %d должна быть %d", c.input[5], len(c.input)-9)
+		return fmt.Errorf("неверная длина сообщения %d должна быть %d", c.input[5], len(c.input)-9)
 	}
 	if c.input[l-3] != 3 {
 		return fmt.Errorf("Неверный код EXT ")
@@ -78,7 +78,7 @@ func (c *ControllerUtopia) verify() error {
 	crc := crc16_calc(c.input[4 : len(c.input)-3])
 	icrc := uint16(c.input[l-2])<<8 | uint16(c.input[l-1])
 	if crc != icrc {
-		return fmt.Errorf("Неверная CRC %X должна быть %X", icrc, crc)
+		return fmt.Errorf("неверная CRC %X должна быть %X", icrc, crc)
 	}
 	c.data = c.input[6 : len(c.input)-3]
 	return nil

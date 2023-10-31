@@ -8,7 +8,7 @@ import (
 	"github.com/ruraomsk/potop/hardware"
 )
 
-// Spot TlcAndGroupControl and group control (2)
+// TlcAndGroupControl Spot TlcAndGroupControl and group control (2)
 type TlcAndGroupControl struct {
 	lastop   time.Time
 	command  int      //команда 0 нет команды 1 - локальная команда 2 - команда из центра 3 - мигание 6 - отключение 7-запустить план
@@ -18,6 +18,18 @@ type TlcAndGroupControl struct {
 	// Бит устанавливается в 1, если группа управляется ЗЕЛЕНЫМ, устанавливается в 0 если группа получает команду КРАСНЫЙ.
 }
 
+func (t *TlcAndGroupControl) ToString() string {
+	res := fmt.Sprintf("Message 02 %s %d %d [ ", toString(t.lastop), t.command, t.watchdog)
+	for _, v := range t.ctrlSG {
+		if !v {
+			res += "X"
+		} else {
+			res += "_"
+		}
+	}
+	res += " ]"
+	return res
+}
 func (t *TlcAndGroupControl) execute() {
 	logger.Debug.Printf("execute TlcAndGroupControl %v", t)
 	if t.command == 2 {
@@ -76,7 +88,7 @@ func (t *TlcAndGroupControl) fromData(data []byte) error {
 	return nil
 }
 
-// Spot Message 8  – Signal group count-down, управление сигнальными группами
+// CountDown Spot Message 8  – Signal group count-down, управление сигнальными группами
 type CountDown struct {
 	lastop time.Time
 	index  int      //Индекс группы из 8 сигнальных групп
@@ -85,11 +97,15 @@ type CountDown struct {
 	// Ожидаемое время устанавливается равным 255, если сигнальная группа не доступна.
 }
 
-func (c *CountDown) execute() {
+func (c CountDown) ToString() string {
+	return fmt.Sprintf("Message 08 %s %v ", toString(c.lastop), c.count)
+}
+
+func (c CountDown) execute() {
 	logger.Debug.Printf("execute CountDown %v", c)
 }
 
-func (c *CountDown) toData() []byte {
+func (c CountDown) toData() []byte {
 	c.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 8, byte(c.index))
@@ -110,7 +126,7 @@ func (c *CountDown) fromData(data []byte) error {
 	return nil
 }
 
-// Spot Message 9  – Extended Signal group count-down, управление сигнальными группами
+// ExtendedCountDown Spot Message 9  – Extended Signal group count-down, управление сигнальными группами
 type ExtendedCountDown struct {
 	lastop     time.Time
 	plan       int
@@ -163,7 +179,7 @@ func (e *ExtendedCountDown) fromData(data []byte) error {
 	return nil
 }
 
-// Message 0 – Diagnostic request message
+// DiagnosticRequest Message 0 – Diagnostic request message
 type DiagnosticRequest struct {
 	lastop time.Time
 }
@@ -182,18 +198,18 @@ func (d *DiagnosticRequest) fromData(data []byte) error {
 	return nil
 }
 
-// Message 24 – Request for classified counts by vehicle length
-type ReqClassifiedLenght struct {
+// ReqClassifiedLength Message 24 – Request for classified counts by vehicle length
+type ReqClassifiedLength struct {
 	lastop time.Time
 }
 
-func (r *ReqClassifiedLenght) toData() []byte {
+func (r *ReqClassifiedLength) toData() []byte {
 	r.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 24)
 	return result
 }
-func (r *ReqClassifiedLenght) fromData(data []byte) error {
+func (r *ReqClassifiedLength) fromData(data []byte) error {
 	if data[0] != 24 {
 		return fmt.Errorf("это не сообщение 24")
 	}
@@ -201,7 +217,7 @@ func (r *ReqClassifiedLenght) fromData(data []byte) error {
 	return nil
 }
 
-// Message 25 – Request for classified counts by vehicle speed
+// ReqClassifiedSpeed Message 25 – Request for classified counts by vehicle speed
 type ReqClassifiedSpeed struct {
 	lastop time.Time
 }
@@ -220,7 +236,7 @@ func (r *ReqClassifiedSpeed) fromData(data []byte) error {
 	return nil
 }
 
-// Message 23 – Bus prediction
+// BusPrediction Message 23 – Bus prediction
 type BusPrediction struct {
 	lastop         time.Time
 	PTcode         int  //PT service code
@@ -257,7 +273,7 @@ func (b *BusPrediction) fromData(data []byte) error {
 	return nil
 }
 
-// Message 3 – Date and time setting
+// DateAndTime Message 3 – Date and time setting
 type DateAndTime struct {
 	DateTime time.Time
 }
@@ -288,7 +304,7 @@ func (d *DateAndTime) fromData(data []byte) error {
 	return nil
 }
 
-// Message 6 - Special commands
+// SpecialCommands Message 6 - Special commands
 type SpecialCommands struct {
 	lastop time.Time
 	value  byte //value 1 for reset alarms

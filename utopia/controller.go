@@ -1,6 +1,7 @@
 package utopia
 
 import (
+	"sync"
 	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
@@ -38,12 +39,19 @@ import (
 // ___________________________________________________________________________________
 
 var ctrl = ControllerUtopia{id: 1, lastACK: 0, input: make([]byte, 0), output: make([]byte, 0)}
+var mutex sync.Mutex
 
 func getDuration() time.Duration {
 	return 5 * time.Second
 }
 
 var live chan any
+
+func GetControllerUtopia() ControllerUtopia {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return ctrl
+}
 
 func controlUtopiaServer() {
 	var timer *time.Timer
@@ -76,103 +84,109 @@ func Controller() {
 	for {
 		ctrl.input = <-fromServer
 		live <- 0
-		if err := ctrl.verify(); err != nil {
-			ctrl.sendNACK()
-			logger.Error.Print(err.Error())
-			continue
-		}
-		if ctrl.isNak() {
-			//Повторим предыдущее сообшение
-			logger.Error.Printf("Повторяем сообщение % 02X", ctrl.output)
-			toServer <- ctrl.output
-			continue
-		}
-		if ctrl.input[4] == ctrl.lastACK {
-			logger.Error.Printf("ACK не изменился")
-			continue
-		}
-		if ctrl.isLive() {
-			ctrl.sendLive()
-			continue
-		}
-		switch ctrl.input[6] {
-		case 2:
-			// Message 2 – TLC and group control
-			err := ctrl.TlcAndGroupControl.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.TlcAndGroupControl.execute()
-			ctrl.StatusAndDetections.fill()
-			ctrl.sendReplay(ctrl.StatusAndDetections.toData())
-		case 8:
-			// Message 8 – Signal group count-down
-			err := ctrl.CountDown.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.CountDown.execute()
-			ctrl.SignalGroupFeedback.fill()
-			ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
-		case 9:
-			// Message 9 – Signal group extended count-down
-			err := ctrl.ExtendedCountDown.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.ExtendedCountDown.execute()
-			ctrl.SignalGroupFeedback.fill()
-			ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
-		case 3:
-			// Message 3 – Date and time setting
-			err := ctrl.DateAndTime.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			// fmt.Println(ctrl.DateAndTime.DateTime.String())
-			ctrl.sendLive()
-		case 0:
-			// Message 0 – Diagnostic request message
-			err := ctrl.DiagnosticRequest.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.ExtendedDiagnostic.fill()
-			ctrl.sendReplay(ctrl.ExtendedDiagnostic.toData())
-		case 24:
-			// Message 24 – Request for classified counts by vehicle length
-			err := ctrl.ReqClassifiedLenght.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.ClassifiedCounts.fill()
-			ctrl.sendReplay(ctrl.ClassifiedCounts.toData())
-		case 25:
-			// Message 25 – Request for classified counts by vehicle speed
-			err := ctrl.ReqClassifiedSpeed.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.ClassifiedSpeeds.fill()
-			ctrl.sendReplay(ctrl.ClassifiedSpeeds.toData())
-		case 6:
-			// Message 6 - Special commands
-			err := ctrl.SpecialCommands.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.ReplaySpecial.fill()
-			ctrl.sendReplay(ctrl.ReplaySpecial.toData())
-		case 23:
-			// Message 23 – Bus prediction
-			err := ctrl.BusPrediction.fromData(ctrl.data)
-			if err != nil {
-				logger.Error.Print(err.Error())
-			}
-			ctrl.BusDetection.fill()
-			ctrl.sendReplay(ctrl.BusDetection.toData())
-		default:
-			logger.Error.Printf("Неопознанное сообщение от сервера %d", ctrl.input[6])
-		}
+		workMessage()
 	}
+}
+func workMessage() {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if err := ctrl.verify(); err != nil {
+		ctrl.sendNACK()
+		logger.Error.Print(err.Error())
+		return
+	}
+	if ctrl.isNak() {
+		//Повторим предыдущее сообшение
+		logger.Error.Printf("Повторяем сообщение % 02X", ctrl.output)
+		toServer <- ctrl.output
+		return
+	}
+	if ctrl.input[4] == ctrl.lastACK {
+		logger.Error.Printf("ACK не изменился")
+		return
+	}
+	if ctrl.isLive() {
+		ctrl.sendLive()
+		return
+	}
+	switch ctrl.input[6] {
+	case 2:
+		// Message 2 – TLC and group control
+		err := ctrl.TlcAndGroupControl.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.TlcAndGroupControl.execute()
+		ctrl.StatusAndDetections.fill()
+		ctrl.sendReplay(ctrl.StatusAndDetections.toData())
+	case 8:
+		// Message 8 – Signal group count-down
+		err := ctrl.CountDown.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.CountDown.execute()
+		ctrl.SignalGroupFeedback.fill()
+		ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
+	case 9:
+		// Message 9 – Signal group extended count-down
+		err := ctrl.ExtendedCountDown.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.ExtendedCountDown.execute()
+		ctrl.SignalGroupFeedback.fill()
+		ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
+	case 3:
+		// Message 3 – Date and time setting
+		err := ctrl.DateAndTime.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		// fmt.Println(ctrl.DateAndTime.DateTime.String())
+		ctrl.sendLive()
+	case 0:
+		// Message 0 – Diagnostic request message
+		err := ctrl.DiagnosticRequest.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.ExtendedDiagnostic.fill()
+		ctrl.sendReplay(ctrl.ExtendedDiagnostic.toData())
+	case 24:
+		// Message 24 – Request for classified counts by vehicle length
+		err := ctrl.ReqClassifiedLenght.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.ClassifiedCounts.fill()
+		ctrl.sendReplay(ctrl.ClassifiedCounts.toData())
+	case 25:
+		// Message 25 – Request for classified counts by vehicle speed
+		err := ctrl.ReqClassifiedSpeed.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.ClassifiedSpeeds.fill()
+		ctrl.sendReplay(ctrl.ClassifiedSpeeds.toData())
+	case 6:
+		// Message 6 - Special commands
+		err := ctrl.SpecialCommands.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.ReplaySpecial.fill()
+		ctrl.sendReplay(ctrl.ReplaySpecial.toData())
+	case 23:
+		// Message 23 – Bus prediction
+		err := ctrl.BusPrediction.fromData(ctrl.data)
+		if err != nil {
+			logger.Error.Print(err.Error())
+		}
+		ctrl.BusDetection.fill()
+		ctrl.sendReplay(ctrl.BusDetection.toData())
+	default:
+		logger.Error.Printf("Неопознанное сообщение от сервера %d", ctrl.input[6])
+	}
+
 }

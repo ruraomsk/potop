@@ -8,13 +8,13 @@ var (
 type Setup struct {
 	LogPath     string      `toml:"logpath"`
 	Id          int         `toml:"id"`
-	Modbus      Modbus      `toml:"modbus"`
-	Utopia      Utopia      `toml:"utopia"`
-	TrafficData TrafficData `toml:"trafficdata"`
-	ModbusRadar ModbusRadar `toml:"modbusradar"`
+	Modbus      Modbus      `toml:"modbus" json:"modbus"`
+	Utopia      Utopia      `toml:"utopia" json:"utopia"`
+	TrafficData TrafficData `toml:"trafficdata" json:"trafficdata"`
+	ModbusRadar ModbusRadar `toml:"modbusradar" json:"modbusradar"`
 }
 type ExtSetup struct {
-	Modbus      Modbus      `toml:"modbus"`
+	Modbus      Modbus      `toml:"modbus" json:"modbus"`
 	Utopia      Utopia      `toml:"utopia" json:"utopia"`
 	TrafficData TrafficData `toml:"trafficdata" json:"trafficdata"`
 	ModbusRadar ModbusRadar `toml:"modbusradar" json:"modbusradar"`

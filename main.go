@@ -26,7 +26,7 @@ func init() {
 	setup.Set = new(setup.Setup)
 	setup.ExtSet = new(setup.ExtSetup)
 	if _, err := toml.DecodeFS(resources, "config/base.toml", &setup.Set); err != nil {
-		fmt.Println("Dissmis base.toml")
+		fmt.Println("Dismiss base.toml")
 		os.Exit(-1)
 		return
 	}
@@ -38,7 +38,7 @@ func init() {
 		}
 	}
 	setup.ExtSet.Update(*setup.Set)
-	os.MkdirAll(setup.Set.LogPath, 0777)
+	_ = os.MkdirAll(setup.Set.LogPath, 0777)
 }
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())

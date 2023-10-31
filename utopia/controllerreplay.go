@@ -32,6 +32,54 @@ type sensor struct {
 	occupancy int
 }
 
+func (s *StatusAndDetections) ToString() string {
+	var st = "undef"
+	switch s.TLCstatus {
+	case 0:
+		st = "NO COMMAND"
+	case 1:
+		st = "LOCAL"
+	case 2:
+		st = "CENTRAL"
+	case 3:
+		st = "FLASHING"
+	case 4:
+		st = "ALL RED"
+	case 5:
+		st = "MANUAL"
+	case 6:
+		st = "DARK"
+	case 7:
+		st = fmt.Sprintf("RUN PLAN %d", s.plan)
+	}
+	var bs = ""
+	if s.TLCbasic&1 != 0 {
+		bs += "watch-dog expired"
+	}
+	if s.TLCbasic&2 != 0 {
+		bs += "communication error"
+	}
+	if s.TLCbasic&0x4 != 0 {
+		bs += "conflicting signal group command"
+	}
+	if s.TLCbasic&0x8 != 0 {
+		bs += "centralisation inhibited"
+	}
+	if s.TLCbasic&0x10 != 0 {
+		bs += "inter-green violation"
+	}
+	if s.TLCbasic&0x20 != 0 {
+		bs += "lamp fault"
+	}
+	if s.TLCbasic&0x40 != 0 {
+		bs += "not used"
+	}
+	if s.TLCbasic&0x80 != 0 {
+		bs += "extended diagnostics update"
+	}
+	return fmt.Sprintf("Message 190 %s %s %s \n %v", toString(s.lastop), st, bs, s.sensors[:32])
+}
+
 func (s *StatusAndDetections) fill() {
 	s.TLCbasic = hardware.GetDiagnosticUtopia()
 	s.TLCstatus = hardware.GetStatusUtopia()
@@ -78,7 +126,7 @@ func (s *StatusAndDetections) fromData(data []byte) error {
 // Controller Message 4 – Signal Group feedback, ответ от сигнальных групп
 type SignalGroupFeedback struct {
 	lastop time.Time
-	states [32]int //Состояние светофорной группы Может принимать значения
+	states [64]int //Состояние светофорной группы Может принимать значения
 	// Красный, красный (пешеходный) 					0х0
 	// Желтый, зеленый мигающий и желтый				0х1
 	// Красный, переходящий в желтый (перед зеленым)	0х2
@@ -89,6 +137,10 @@ type SignalGroupFeedback struct {
 	// Ждущий зеленый 									0хB
 	// Неработающий 									0хE
 	// Группа не определена								0хF
+}
+
+func (s *SignalGroupFeedback) ToString() string {
+	return fmt.Sprintf("Message 4 %s  % 02X", toString(s.lastop), s.states)
 }
 
 func (s *SignalGroupFeedback) fill() {
@@ -102,7 +154,7 @@ func (s *SignalGroupFeedback) toData() []byte {
 	s.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 4)
-	b := make([]byte, 16)
+	b := make([]byte, 32)
 	j := 0
 	l := 4
 	for _, v := range s.states {

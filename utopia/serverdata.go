@@ -17,7 +17,7 @@ type ServerUtopia struct {
 	CountDown           CountDown           // Spot Message 8  – Signal group count-down, управление сигнальными группами
 	ExtendedCountDown   ExtendedCountDown   // Spot Message 9  – Extended Signal group count-down, управление сигнальными группами
 	DiagnosticRequest   DiagnosticRequest   // Message 0 – Diagnostic request message
-	ReqClassifiedLenght ReqClassifiedLenght // Message 24 – Request for classified counts by vehicle length
+	ReqClassifiedLenght ReqClassifiedLength // Message 24 – Request for classified counts by vehicle length
 	ReqClassifiedSpeed  ReqClassifiedSpeed  // Message 25 – Request for classified counts by vehicle speed
 	BusPrediction       BusPrediction       // Message 23 – Bus prediction
 	DateAndTime         DateAndTime         // Message 3 – Date and time setting
