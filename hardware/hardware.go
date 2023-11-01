@@ -203,6 +203,6 @@ func fillDebugData(utopia bool) {
 
 	StateHardware.Tmin = rand.Intn(50)
 	StateHardware.RealWatchDog = uint16(rand.Intn(50))
-	StateHardware.MaskCommand = uint32(rand.Intn(32000))<<16 | uint32(rand.Intn(32000))
-
+	StateHardware.MaskCommand = rand.Uint32()
+	// StateHardware.MaskCommand = uint32(rand.Intn(32000))<<16 | uint32(rand.Intn(32000))
 }
