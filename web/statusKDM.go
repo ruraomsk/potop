@@ -8,6 +8,10 @@ import (
 	"github.com/ruraomsk/potop/hardware"
 )
 
+// TextView {
+// 	id=idLine3,text = "Line3",text-size="24px",
+// },
+
 const KDMText = `
 ListLayout {
 	width = 100%, height = 100%, orientation = vertical, padding = 16px,
@@ -21,11 +25,8 @@ ListLayout {
 		TextView {
 			id=idLine2,text = "Line2",text-size="24px",
 		},
-		TextView {
-			id=idLine3,text = "Line3",text-size="24px",
-		},
-		TextView {
-			id=idLine4,text = "Line4",text-size="24px",
+		TableView {
+			cell-horizontal-align = left,  title = "Направления", id=idNaps,
 		},
 	]
 }
@@ -44,10 +45,57 @@ func makeViewKDM(view rui.View) {
 	defer mutex.Unlock()
 	hs := hardware.GetStateHard()
 	rui.Set(view, "idHeader", "text", fmt.Sprintf("<b>Текущее состояние КДМ %s</b>", toString(time.Now())))
-	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Связь с КДM</b> %v  <b>Utopia</b> %v <b>Последняя команда в</b> %s", toRussian(hs.Connect), toRussian(hs.Utopia), toString(hs.LastOperation)))
+	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Связь с КДM</b> %v  <b>Utopia</b> %v <b>Последняя команда в</b> %s <b>Тмин=%d Маска=%x остаток watchdog=%d</b>", toRussian(hs.Connect), toRussian(hs.Utopia), toString(hs.LastOperation), hs.Tmin, hs.MaskCommand, hs.RealWatchDog))
 	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>OC</b> %v  <b>KK</b> %v <b>ЖМ</b> %v <b>WatchDog</b> %d <b>План</b> %d <b>Статус КДМ</b> % 02X ", toRussian(hs.Dark), toRussian(hs.AllRed), toRussian(hs.Flashing), hs.WatchDog, hs.Plan, hs.Status))
-	rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Направления % 02X </b>", hs.StatusDirs))
-	rui.Set(view, "idLine4", "text", fmt.Sprintf("<b>Тмин=%d Маска=%x остаток watchdog=%d</b>", hs.Tmin, hs.MaskCommand, hs.RealWatchDog))
+	// rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Направления % 02X </b>", hs.StatusDirs))
+	var content [][]any
+	content = append(content, []any{"Нап", "Задание", "Состояние"})
+	count := 1
+	s := int(hs.MaskCommand)
+	for i := 0; i < 32; i++ {
+		st := "Закрыто"
+		if s&0x80000000 != 0 {
+			st = "Открыто"
+		}
+		s = s << 1
+		ds := "undef"
+		switch hs.StatusDirs[i] {
+		case 0:
+			ds = "все сигналы выключены"
+		case 1:
+			ds = "направление перешло в неактивное состояние, желтый после зеленого"
+		case 2:
+			ds = "направление перешло в неактивное состояние, красный"
+		case 3:
+			ds = "направление перешло в активное состояние, красный"
+		case 4:
+			ds = "направление перешло в активное состояние, красный c желтым"
+		case 5:
+			ds = "направление перешло в активное состояние, зеленый"
+		case 6:
+			ds = "направление не меняло свое состояние, зеленый"
+		case 7:
+			ds = "направление не меняло свое состояние, красный"
+		case 8:
+			ds = "зеленый мигающий сигнал"
+		case 9:
+			ds = "желтый мигающий в режиме ЖМ"
+		case 10:
+			ds = "сигналы выключены в режиме ОС"
+		case 11:
+			ds = "неиспользуемое направление"
+		default:
+			ds = "error code"
+		}
+		content = append(content, []any{i, st, ds})
+		count++
+	}
+	rui.SetParams(view, "idNaps", rui.Params{
+		rui.Content:             content,
+		rui.HeadHeight:          1,
+		rui.CellPadding:         "4px",
+		rui.CellHorizontalAlign: "right",
+	})
 }
 func updaterKDM(view rui.View, session rui.Session) {
 	ticker := time.NewTicker(time.Second)

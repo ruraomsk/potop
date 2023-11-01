@@ -104,7 +104,7 @@ func listenController() {
 func Server() {
 	go listenController()
 	ticker := time.NewTicker(time.Second)
-	sendTLC := time.NewTicker(10 * time.Second)
+	sendTLC := time.NewTimer(time.Second)
 	sendCountDown := time.NewTicker(5 * time.Second)
 	sendExtebdedCountDown := time.NewTicker(6 * time.Second)
 	sendBus := time.NewTicker(20 * time.Second)
@@ -131,7 +131,7 @@ func Server() {
 				}
 			}
 			serv.sendCommand(serv.TlcAndGroupControl.toData())
-
+			sendTLC = time.NewTimer(time.Duration(serv.TlcAndGroupControl.watchdog) * time.Second)
 		case <-sendCountDown.C:
 			for i := 0; i < len(serv.CountDown.count); i++ {
 				serv.CountDown.count[i] = byte(rand.Intn(255))
