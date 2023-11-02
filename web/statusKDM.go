@@ -14,16 +14,18 @@ import (
 
 const KDMText = `
 ListLayout {
-	width = 100%, height = 100%, orientation = vertical, padding = 16px,
+	style = showPage,
+	orientation = vertical,
 	content = [
 		TextView {
-			id=idHeader,text = "<b>Текущее состояние КДМ </b>",text-align="center",text-size="24px",
+			style=header1,
+			id=idHeader,text = "<b>Текущее состояние КДМ </b>",
 		},
 		TextView {
-			id=idLine1,text = "Line1",text-size="24px",
+			id=idLine1,text = "Line1",text-size="18px",
 		},
 		TextView {
-			id=idLine2,text = "Line2",text-size="24px",
+			id=idLine2,text = "Line2",text-size="18px",
 		},
 		TableView {
 			cell-horizontal-align = left,  title = "Направления", id=idNaps,
@@ -93,7 +95,7 @@ func makeViewKDM(view rui.View) {
 	rui.SetParams(view, "idNaps", rui.Params{
 		rui.Content:             content,
 		rui.HeadHeight:          1,
-		rui.CellPadding:         "4px",
+		rui.CellPadding:         "1px",
 		rui.CellHorizontalAlign: "right",
 	})
 }

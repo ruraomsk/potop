@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/hardware"
 	"github.com/ruraomsk/potop/stat"
 )
@@ -97,7 +96,7 @@ func (s *StatusAndDetections) fill() {
 		}
 	}
 	stat.ClearCountValues()
-	logger.Debug.Printf("fill StatusAndDetections %v", s)
+	// logger.Debug.Printf("fill StatusAndDetections %v", s)
 }
 
 func (s *StatusAndDetections) toData() []byte {
@@ -154,7 +153,7 @@ func (s *SignalGroupFeedback) fill() {
 	for i, v := range hardware.GetStatusDirs() {
 		s.states[i] = int(v)
 	}
-	logger.Debug.Printf("fill SignalGroupFeedback %v", s)
+	// logger.Debug.Printf("fill SignalGroupFeedback %v", s)
 }
 
 func (s *SignalGroupFeedback) toData() []byte {

@@ -15,28 +15,33 @@ import (
 // border = _{ style = solid, width = 1px, color = darkgray },
 const statusText = `
 		ListLayout {
-			width = 100%, height = 100%, orientation = vertical, padding = 16px,
+			style = showPage,
+			orientation = vertical,
+			padding="16px",
 			content = [
 				TextView {
-					text-color="red",text-align="center",text-size="24px",
-					border = _{ style = solid, width = 1px, color = darkgray },
-					id=titleStatus,text = ""
+					style=header1,
+					id=titleStatus,text = "",
 				},
 				TextView {
-					id=idUtopia,semantics="code",
-					text = "server"
+					id=idUtopia,
+					text = "",
+					text-size="24px",
 				},
 				TextView {
-					id=idModbus,semantics="code",
-					text = "modbus"
+					id=idModbus,
+					text = "",
+					text-size="24px",
 				},
 				TextView {
-					id=setModbusRadar,semantics="code",
-					text = "modbusRadar"
+					id=setModbusRadar,
+					text = "",
+					text-size="24px",
 				},
 				TextView {
-					id=setTrafficData,semantics="code",
-					text = "trafficData"
+					id=setTrafficData,
+					text = "",
+					text-size="24px",
 				},
 			]
 		}

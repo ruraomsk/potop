@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/hardware"
 )
 
@@ -31,7 +30,7 @@ func (t *TlcAndGroupControl) ToString() string {
 	return res
 }
 func (t *TlcAndGroupControl) execute() {
-	logger.Debug.Printf("execute TlcAndGroupControl %v", t)
+	// logger.Debug.Printf("execute TlcAndGroupControl %v", t)
 	if t.command == 2 {
 		hardware.SetTLC(t.watchdog, t.ctrlSG)
 		return
@@ -102,11 +101,11 @@ func (c CountDown) ToString() string {
 }
 
 func (c CountDown) execute() {
-	logger.Debug.Printf("execute CountDown %v", c)
+	// logger.Debug.Printf("execute CountDown %v", c)
 }
 
 func (c CountDown) toData() []byte {
-	c.lastop = time.Now()
+	// c.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 8, byte(c.index))
 	for _, v := range c.count {
@@ -145,7 +144,7 @@ type ExtendedCountDown struct {
 }
 
 func (e *ExtendedCountDown) execute() {
-	logger.Debug.Printf("execute ExtendedCountDown %v", e)
+	// logger.Debug.Printf("execute ExtendedCountDown %v", e)
 
 }
 

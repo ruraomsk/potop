@@ -14,12 +14,13 @@ import (
 
 const utopiaText = `
 ListLayout {
-		width = 100%, height = 100%, orientation = vertical, padding = 32px,
+		 orientation = vertical,
 		text-align = left, vertical-align = top,
+		style = showPage,
 		content = [
 			TextView {
-				id=idHeader, text = "<b>Текущее состояние Utopia </b>",text-align="center",text-size="24px",
-				text-align = center,
+				style=header1,
+				id=idHeader, text = "<b>Текущее состояние Utopia </b>",
 				},
 				TextView {
 					text = "Команды СПОТ",text-size="24px",

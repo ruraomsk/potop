@@ -12,11 +12,10 @@ import (
 
 const noTrafficText = `
 ListLayout {
-	width = 100%, height = 100%, orientation = vertical, padding = 16px,
+	orientation = vertical, style = showPage,
 	content = [
 		TextView {
-			text-color="red",text-align="center",text-size="24px",
-			border = _{ style = solid, width = 1px, color = darkgray },
+			style=header1,
 			text = "TrafficData не используется в данной системе"
 		},
 	]
@@ -27,8 +26,7 @@ const trafficText = `
 			width = 100%, height = 100%, orientation = vertical, padding = 16px,
 			content = [
 				TextView {
-					text-color="black",text-align="center",text-size="24px",
-					border = _{ style = solid, width = 1px, color = darkgray },
+					style=header1,
 					id=titleTraffic,text = ""
 				},
 				TextView {

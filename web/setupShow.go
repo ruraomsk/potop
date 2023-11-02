@@ -10,10 +10,12 @@ import (
 
 const setupText = `
 		ListLayout {
-			width = 100%, height = 100%, orientation = vertical, padding = 16px,
+			style = showPage,
+			orientation = vertical,
 			content = [
 				TextView {
-					text = "<b>Изменение настроек связи с контроллером </b>",text-align="center",text-size="24px",
+					style=header1,
+					text = "<b>Изменение настроек связи с контроллером </b>",
 				},
 				ListLayout {
 					orientation = horizontal, list-column-gap=16px,padding = 16px,

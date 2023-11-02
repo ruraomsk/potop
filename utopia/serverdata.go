@@ -2,16 +2,15 @@ package utopia
 
 import (
 	"fmt"
-	"time"
 )
 
 type ServerUtopia struct {
-	id       byte      //Идентификатор контроллера
-	lastACK  byte      //Предыдущий АСК
-	input    []byte    //Принято от контроллера
-	output   []byte    //Передано на контроллер
-	data     []byte    //Вычитанные чистые данные
-	lastTime time.Time //Последний прием от контроллера
+	id      byte   //Идентификатор контроллера
+	lastACK byte   //Предыдущий АСК
+	input   []byte //Принято от контроллера
+	output  []byte //Передано на контроллер
+	data    []byte //Вычитанные чистые данные
+	// lastTime time.Time //Последний прием от контроллера
 	//Запросы сервера
 	TlcAndGroupControl  TlcAndGroupControl  // Spot TLC and group control (2)
 	CountDown           CountDown           // Spot Message 8  – Signal group count-down, управление сигнальными группами
@@ -36,7 +35,7 @@ func (c *ServerUtopia) sendNACK() {
 	c.sendMessage(21, make([]byte, 0))
 }
 func (c *ServerUtopia) getACK() byte {
-	cnt := c.lastACK
+	var cnt byte
 	if c.lastACK == 6 {
 		cnt = 8
 	} else {
@@ -67,25 +66,25 @@ func (c *ServerUtopia) sendMessage(cnt byte, message []byte) {
 }
 func (c *ServerUtopia) verify() error {
 	if c.input[0] != 1 || (c.input[1]+c.input[2]) != 0xff {
-		return fmt.Errorf("Неверный признак сообшения от СПОТ")
+		return fmt.Errorf("неверный признак сообшения от СПОТ")
 	}
 	if c.input[3] != c.id {
-		return fmt.Errorf("Неверный номер контроллера")
+		return fmt.Errorf("неверный номер контроллера")
 	}
 	if c.input[4] != 6 && c.input[4] != 8 && c.input[4] != 21 {
-		return fmt.Errorf("Неверный тип сообщения")
+		return fmt.Errorf("неверный тип сообщения")
 	}
 	l := int(c.input[5]) + 9
 	if l != len(c.input) {
-		return fmt.Errorf("Неверная длина сообщения %d должна быть %d", c.input[5], len(c.input)-9)
+		return fmt.Errorf("неверная длина сообщения %d должна быть %d", c.input[5], len(c.input)-9)
 	}
 	if c.input[l-3] != 3 {
-		return fmt.Errorf("Неверный код EXT ")
+		return fmt.Errorf("неверный код EXT ")
 	}
 	crc := crc16_calc(c.input[4 : len(c.input)-3])
 	icrc := uint16(c.input[l-2])<<8 | uint16(c.input[l-1])
 	if crc != icrc {
-		return fmt.Errorf("Неверная CRC %X должна быть %X", icrc, crc)
+		return fmt.Errorf("неверная CRC %X должна быть %X", icrc, crc)
 	}
 	c.data = c.input[6 : len(c.input)-3]
 	return nil

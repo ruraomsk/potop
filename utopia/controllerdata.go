@@ -73,7 +73,7 @@ func (c *ControllerUtopia) verify() error {
 		return fmt.Errorf("неверная длина сообщения %d должна быть %d", c.input[5], len(c.input)-9)
 	}
 	if c.input[l-3] != 3 {
-		return fmt.Errorf("Неверный код EXT ")
+		return fmt.Errorf("неверный код EXT ")
 	}
 	crc := crc16_calc(c.input[4 : len(c.input)-3])
 	icrc := uint16(c.input[l-2])<<8 | uint16(c.input[l-1])
