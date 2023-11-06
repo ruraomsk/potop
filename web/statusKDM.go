@@ -53,7 +53,7 @@ func makeViewKDM(view rui.View) {
 	var content [][]any
 	content = append(content, []any{"Нап", "Задание", "Состояние"})
 	count := 1
-	s := int(hs.MaskCommand)
+	s := uint32(hs.MaskCommand)
 	for i := 0; i < 32; i++ {
 		st := "Закрыто"
 		if s&0x80000000 != 0 {

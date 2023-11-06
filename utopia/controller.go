@@ -103,6 +103,7 @@ func workMessage() {
 	}
 	if ctrl.input[4] == ctrl.lastACK {
 		logger.Error.Printf("ACK не изменился")
+		ctrl.sendLive()
 		return
 	}
 	if ctrl.isLive() {
@@ -187,6 +188,7 @@ func workMessage() {
 		ctrl.sendReplay(ctrl.BusDetection.toData())
 	default:
 		logger.Error.Printf("Неопознанное сообщение от сервера %d", ctrl.input[6])
+		ctrl.sendLive()
 	}
 
 }

@@ -59,6 +59,10 @@ func (c *ControllerUtopia) sendMessage(cnt byte, message []byte) {
 	toServer <- c.output
 }
 func (c *ControllerUtopia) verify() error {
+	c.input = c.input[5:]
+	if len(c.input) < 9 {
+		return fmt.Errorf("неверная длина сообшения от спот %d", len(c.input))
+	}
 	if c.input[0] != 1 || (c.input[1]+c.input[2]) != 0xff {
 		return fmt.Errorf("неверный признак сообшения от спот")
 	}

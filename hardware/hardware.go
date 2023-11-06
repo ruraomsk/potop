@@ -86,7 +86,7 @@ func Start() {
 				tickerDebug.Stop()
 			}
 		case wc := <-CoilsCmd:
-			logger.Debug.Printf("coils cmd %v", wc)
+			// logger.Debug.Printf("coils cmd %v", wc)
 			if StateHardware.GetConnect() {
 				err = client.WriteCoils(wc.Start, wc.Data)
 				if err != nil {
@@ -98,7 +98,7 @@ func Start() {
 				}
 			}
 		case wh := <-HoldsCmd:
-			logger.Debug.Printf("holds cmd %v", wh)
+			// logger.Debug.Printf("holds cmd %v", wh)
 			if StateHardware.GetConnect() {
 				err = client.WriteRegisters(wh.Start, wh.Data)
 				if err != nil {

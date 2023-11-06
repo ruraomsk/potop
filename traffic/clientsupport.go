@@ -139,7 +139,7 @@ func replayEvent(buffer string) {
 		return
 	}
 	if cartype < 0 || cartype > 9 {
-		logger.Debug.Printf("event %v", c)
+		// logger.Debug.Printf("event %v", c)
 		return
 	}
 	stat.InStat <- stat.OneTick{Number: zoneid, Value: 1, Time: time.Now(), Type: 0, Diap: diapazon}
