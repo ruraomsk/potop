@@ -66,6 +66,7 @@ func makeViewUtopia(view rui.View) {
 	rui.Set(view, "idHeader", "text", fmt.Sprintf("<b>Текущее состояние Utopia %s</b>", toString(time.Now())))
 	rui.Set(view, "idLine1", "text", ctrl.TlcAndGroupControl.ToString())
 	rui.Set(view, "idLine2", "text", ctrl.CountDown.ToString())
+	rui.Set(view, "idLine3", "text", ctrl.ExtendedCountDown.ToString())
 	rui.Set(view, "idLine11", "text", ctrl.StatusAndDetections.ToString())
 	rui.Set(view, "idLine12", "text", ctrl.SignalGroupFeedback.ToString())
 

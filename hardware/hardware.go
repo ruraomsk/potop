@@ -18,10 +18,14 @@ var StateHardware = StateHard{Connect: false, Utopia: true, LastOperation: time.
 var client *modbus.ModbusClient
 var err error
 var mutex sync.Mutex
+var nowCoils map[uint16][]bool
+var nowHolds map[uint16][]uint16
 
 func Start() {
 	StateHardware.setConnect(false)
 	count := 0
+	nowCoils = make(map[uint16][]bool)
+	nowHolds = make(map[uint16][]uint16)
 	HoldsCmd = make(chan WriteHolds)
 	CoilsCmd = make(chan WriteCoils)
 	SetWork = make(chan int)
@@ -87,31 +91,70 @@ func Start() {
 			}
 		case wc := <-CoilsCmd:
 			// logger.Debug.Printf("coils cmd %v", wc)
+			StateHardware.setLastOperation()
 			if StateHardware.GetConnect() {
-				err = client.WriteCoils(wc.Start, wc.Data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-					client.Close()
-					StateHardware.setConnect(false)
-				} else {
-					StateHardware.setLastOperation()
+				if needCoils(wc) {
+					err = client.WriteCoils(wc.Start, wc.Data)
+					if err != nil {
+						logger.Error.Print(err.Error())
+						client.Close()
+						StateHardware.setConnect(false)
+					}
 				}
 			}
 		case wh := <-HoldsCmd:
 			// logger.Debug.Printf("holds cmd %v", wh)
+			StateHardware.setLastOperation()
 			if StateHardware.GetConnect() {
-				err = client.WriteRegisters(wh.Start, wh.Data)
-				if err != nil {
-					logger.Error.Print(err.Error())
-					client.Close()
-					StateHardware.setConnect(false)
+				if needHolds(wh) {
+					err = client.WriteRegisters(wh.Start, wh.Data)
+					if err != nil {
+						logger.Error.Print(err.Error())
+						client.Close()
+						StateHardware.setConnect(false)
+					}
 				}
-			} else {
-				StateHardware.setLastOperation()
 			}
 		}
 	}
 }
+func needCoils(wc WriteCoils) bool {
+	w, is := nowCoils[wc.Start]
+	if !is {
+		nowCoils[wc.Start] = wc.Data
+		return true
+	}
+	if len(w) != len(wc.Data) {
+		nowCoils[wc.Start] = wc.Data
+		return true
+	}
+	for i := 0; i < len(w); i++ {
+		if w[i] != wc.Data[i] {
+			nowCoils[wc.Start] = wc.Data
+			return true
+		}
+	}
+	return false
+}
+func needHolds(wh WriteHolds) bool {
+	w, is := nowHolds[wh.Start]
+	if !is {
+		nowHolds[wh.Start] = wh.Data
+		return true
+	}
+	if len(w) != len(wh.Data) {
+		nowHolds[wh.Start] = wh.Data
+		return true
+	}
+	for i := 0; i < len(w); i++ {
+		if w[i] != wh.Data[i] {
+			nowHolds[wh.Start] = wh.Data
+			return true
+		}
+	}
+	return false
+}
+
 func readStatus(utopia bool) error {
 	mutex.Lock()
 	defer mutex.Unlock()

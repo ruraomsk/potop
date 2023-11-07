@@ -42,6 +42,7 @@ func (t *TlcAndGroupControl) toData() []byte {
 	result := make([]byte, 0)
 	result = append(result, 2, byte(t.command), byte(t.watchdog))
 	b := make([]byte, 8)
+
 	j := 0
 	l := 7
 	for i := 0; i < len(t.ctrlSG); i++ {
@@ -141,6 +142,10 @@ type ExtendedCountDown struct {
 	count [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
 	//Время работы (в секундах, до следующего изменения командой).
 	// Ожидаемое время устанавливается равным 255, если сигнальная группа не доступна.
+}
+
+func (e *ExtendedCountDown) ToString() string {
+	return fmt.Sprintf("Message 09 %s %v ", toString(e.lastop), e.count)
 }
 
 func (e *ExtendedCountDown) execute() {

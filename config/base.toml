@@ -7,7 +7,7 @@ debug = false #если истина то запускать имитатор
 device = "/dev/com0"
 baudrate = 38400
 lostControl = 5      #Время потеря контроля Utopia
-
+recode = true
 [modbus]
 # device="rtu:///dev/ttyUSB0"
 # device = "rtu:///dev/ttyEXTRA2_00"

@@ -38,6 +38,7 @@ type Utopia struct {
 	UId         int    `toml:"uid" json:"uid"`
 	Debug       bool   `toml:"debug" json:"debug"`
 	LostControl int    `toml:"lostControl" json:"lostControl"`
+	Recode      bool   `toml:"recode" json:"recode"`
 }
 type TrafficData struct {
 	Work    bool   `toml:"work" json:"work"`
