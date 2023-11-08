@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ruraomsk/potop/hardware"
+	"github.com/ruraomsk/potop/setup"
 )
 
 // TlcAndGroupControl Spot TlcAndGroupControl and group control (2)
@@ -42,24 +43,45 @@ func (t *TlcAndGroupControl) toData() []byte {
 	result := make([]byte, 0)
 	result = append(result, 2, byte(t.command), byte(t.watchdog))
 	b := make([]byte, 8)
-
-	j := 0
-	l := 7
-	for i := 0; i < len(t.ctrlSG); i++ {
-		d := 0
-		if t.ctrlSG[i] {
-			d = 1
+	if setup.Set.Utopia.Recode {
+		//Через задницу
+		j := 0 //Позиция в результате
+		l := 0 //Номер бита
+		for i := 0; i < len(t.ctrlSG); i++ {
+			d := 0
+			if t.ctrlSG[i] {
+				d = 1
+			}
+			d = d << l
+			b[j] |= byte(d)
+			l++
+			if l > 7 {
+				j++
+				l = 0
+			}
 		}
-		d = d << l
-		b[j] |= byte(d)
-		l--
-		if l < 0 {
-			j++
-			l = 7
+		result = append(result, b...)
+		return result
+	} else {
+		//По феншую
+		j := 0 //Позиция в результате
+		l := 7 //Номер бита
+		for i := 0; i < len(t.ctrlSG); i++ {
+			d := 0
+			if t.ctrlSG[i] {
+				d = 1
+			}
+			d = d << l
+			b[j] |= byte(d)
+			l--
+			if l < 0 {
+				j++
+				l = 7
+			}
 		}
+		result = append(result, b...)
+		return result
 	}
-	result = append(result, b...)
-	return result
 }
 func (t *TlcAndGroupControl) fromData(data []byte) error {
 	if data[0] != 2 {
@@ -71,21 +93,41 @@ func (t *TlcAndGroupControl) fromData(data []byte) error {
 	t.lastop = time.Now()
 	t.command = int(data[1])
 	t.watchdog = int(data[2])
-	j := 0
-	l := 7
-	for i := 0; i < len(t.ctrlSG); i++ {
-		if (data[3+j]>>l)&1 > 0 {
-			t.ctrlSG[i] = true
-		} else {
-			t.ctrlSG[i] = false
+	if setup.Set.Utopia.Recode {
+		//Через задницу
+		j := 0
+		l := 0
+		for i := 0; i < len(t.ctrlSG); i++ {
+			if (data[3+j]>>l)&1 > 0 {
+				t.ctrlSG[i] = true
+			} else {
+				t.ctrlSG[i] = false
+			}
+			l++
+			if l > 7 {
+				j++
+				l = 0
+			}
 		}
-		l--
-		if l < 0 {
-			j++
-			l = 7
+		return nil
+	} else {
+		//По феншую
+		j := 0
+		l := 7
+		for i := 0; i < len(t.ctrlSG); i++ {
+			if (data[3+j]>>l)&1 > 0 {
+				t.ctrlSG[i] = true
+			} else {
+				t.ctrlSG[i] = false
+			}
+			l--
+			if l < 0 {
+				j++
+				l = 7
+			}
 		}
+		return nil
 	}
-	return nil
 }
 
 // CountDown Spot Message 8  – Signal group count-down, управление сигнальными группами
@@ -109,8 +151,16 @@ func (c CountDown) toData() []byte {
 	// c.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 8, byte(c.index))
-	for _, v := range c.count {
-		result = append(result, v)
+	if setup.Set.Utopia.Recode {
+		for i := 7; i < len(c.count); i += 8 {
+			for j := i; j > i-8; j-- {
+				result = append(result, c.count[j])
+			}
+		}
+	} else {
+		for _, v := range c.count {
+			result = append(result, v)
+		}
 	}
 	return result
 }
@@ -120,9 +170,20 @@ func (c *CountDown) fromData(data []byte) error {
 	}
 	c.lastop = time.Now()
 	c.index = int(data[1])
-	for i := 0; i < len(c.count); i++ {
-		c.count[i] = data[i+1]
+	if setup.Set.Utopia.Recode {
+		k := 0
+		for i := 7; i < len(c.count); i += 8 {
+			for j := i; j > i-8; j-- {
+				c.count[k] = data[j+1]
+				k++
+			}
+		}
+	} else {
+		for i := 0; i < len(c.count); i++ {
+			c.count[i] = data[i+1]
+		}
 	}
+
 	return nil
 }
 
@@ -160,8 +221,16 @@ func (e *ExtendedCountDown) toData() []byte {
 	for _, v := range e.spare {
 		result = append(result, v)
 	}
-	for _, v := range e.count {
-		result = append(result, v)
+	if setup.Set.Utopia.Recode {
+		for i := 7; i < len(e.count); i += 8 {
+			for j := i; j > i-8; j-- {
+				result = append(result, e.count[j])
+			}
+		}
+	} else {
+		for _, v := range e.count {
+			result = append(result, v)
+		}
 	}
 	return result
 }
@@ -177,8 +246,18 @@ func (e *ExtendedCountDown) fromData(data []byte) error {
 	for i := 0; i < len(e.spare); i++ {
 		e.spare[i] = data[i+5]
 	}
-	for i := 0; i < len(e.count); i++ {
-		e.count[i] = data[i+10]
+	if setup.Set.Utopia.Recode {
+		k := 0
+		for i := 7; i < len(e.count); i += 8 {
+			for j := i; j > i-8; j-- {
+				e.count[k] = data[j+10]
+				k++
+			}
+		}
+	} else {
+		for i := 0; i < len(e.count); i++ {
+			e.count[i] = data[i+10]
+		}
 	}
 	return nil
 }
