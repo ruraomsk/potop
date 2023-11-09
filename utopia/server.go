@@ -133,8 +133,8 @@ func Server() {
 			serv.sendCommand(serv.TlcAndGroupControl.toData())
 			sendTLC = time.NewTimer(time.Duration(serv.TlcAndGroupControl.watchdog) * time.Second)
 		case <-sendCountDown.C:
-			for i := 0; i < len(serv.CountDown.count); i++ {
-				serv.CountDown.count[i] = byte(rand.Intn(255))
+			for i := 0; i < len(serv.CountDown.counts); i++ {
+				serv.CountDown.counts[i] = byte(rand.Intn(255))
 			}
 			serv.sendCommand(serv.CountDown.toData())
 		case <-sendExtebdedCountDown.C:

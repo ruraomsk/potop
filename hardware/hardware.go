@@ -14,7 +14,8 @@ import (
 var HoldsCmd chan WriteHolds
 var CoilsCmd chan WriteCoils
 var SetWork chan int //команды управления 1 - перейти в режим управления Utopia 0- включить локальный план управления
-var StateHardware = StateHard{Connect: false, Utopia: true, LastOperation: time.Unix(0, 0), Status: make([]byte, 4)}
+var StateHardware = StateHard{Connect: false, Utopia: true, LastOperation: time.Unix(0, 0), Status: make([]byte, 4),
+	TOOBs: make([]uint16, 32)}
 var client *modbus.ModbusClient
 var err error
 var mutex sync.Mutex
@@ -66,6 +67,8 @@ func Start() {
 				}
 				count = 0
 				StateHardware.setConnect(true)
+				nowCoils = make(map[uint16][]bool)
+				nowHolds = make(map[uint16][]uint16)
 			}
 		case cmd := <-SetWork:
 			if cmd == 0 {
@@ -206,6 +209,22 @@ func readStatus(utopia bool) error {
 	StateHardware.Tmin = int(utopiacmd[0])
 	StateHardware.RealWatchDog = utopiacmd[3]
 	StateHardware.MaskCommand = uint32(utopiacmd[1])<<16 | uint32(utopiacmd[2])
+	StateHardware.Dark = coils[0]
+
+	//Обновляем источник значений для ТООВ
+	source, err := client.ReadRegisters(14104, 1, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return fmt.Errorf("read holds 14104 1 %s", err.Error())
+	}
+	StateHardware.SourceTOOB = false
+	if source[0] == 1 {
+		StateHardware.SourceTOOB = true
+	}
+	toobs, err := client.ReadRegisters(222, 32, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return fmt.Errorf("read holds 222 32 %s", err.Error())
+	}
+	copy(StateHardware.TOOBs, toobs)
 	return nil
 }
 func fillDebugData(utopia bool) {

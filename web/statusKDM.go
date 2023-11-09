@@ -46,12 +46,19 @@ func makeViewKDM(view rui.View) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	hs := hardware.GetStateHard()
+	source := "внутренний"
+	if hs.SourceTOOB {
+		source = "внешний"
+	}
 	rui.Set(view, "idHeader", "text", fmt.Sprintf("<b>Текущее состояние КДМ %s</b>", toString(time.Now())))
 	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Связь с КДM</b> %v  <b>Utopia</b> %v <b>Последняя команда в</b> %s <b>Тмин=%d Маска=%x остаток watchdog=%d</b>", toRussian(hs.Connect), toRussian(hs.Utopia), toString(hs.LastOperation), hs.Tmin, hs.MaskCommand, hs.RealWatchDog))
-	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>OC</b> %v  <b>KK</b> %v <b>ЖМ</b> %v <b>WatchDog</b> %d <b>План</b> %d <b>Статус КДМ</b> % 02X ", toRussian(hs.Dark), toRussian(hs.AllRed), toRussian(hs.Flashing), hs.WatchDog, hs.Plan, hs.Status))
+	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>OC</b> %v  <b>KK</b> %v <b>ЖМ</b> %v <b>WatchDog</b> %d <b>План</b> %d <b>Статус КДМ</b> % 02X <b>Источник ТООВ</b> %s",
+		toRussian(hs.Dark), toRussian(hs.AllRed), toRussian(hs.Flashing),
+		hs.WatchDog, hs.Plan, hs.Status,
+		source))
 	// rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Направления % 02X </b>", hs.StatusDirs))
 	var content [][]any
-	content = append(content, []any{"Нап", "Задание", "Состояние"})
+	content = append(content, []any{"Нап", "Задание", "Состояние", "Счетчик ТООВ"})
 	count := 1
 	s := uint32(hs.MaskCommand)
 	for i := 0; i < 32; i++ {
@@ -89,14 +96,14 @@ func makeViewKDM(view rui.View) {
 		default:
 			ds = "error code"
 		}
-		content = append(content, []any{i, st, ds})
+		content = append(content, []any{i, st, ds, hs.TOOBs[i]})
 		count++
 	}
 	rui.SetParams(view, "idNaps", rui.Params{
 		rui.Content:             content,
 		rui.HeadHeight:          1,
 		rui.CellPadding:         "1px",
-		rui.CellHorizontalAlign: "right",
+		rui.CellHorizontalAlign: "left",
 	})
 }
 func updaterKDM(view rui.View, session rui.Session) {

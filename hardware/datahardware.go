@@ -20,6 +20,7 @@ type StateHard struct {
 	Dark          bool   //true если Режим ОС
 	AllRed        bool   //true если Режим Кругом Красный
 	Flashing      bool   //true если Режим Желтый Мигающий
+	SourceTOOB    bool   //true если Источник времени отсчета внешний
 	WatchDog      uint16 //Текущий Тайм аут управления
 	Plan          int    //Номер исполняемого плана контроллером КДМ
 	// typedef enum {					//Идентификаторы событий в логе аварий и в регистре событий
@@ -57,9 +58,10 @@ type StateHard struct {
 	//   ZM_YELLOW_BLINK=9, //желтый мигающий в режиме ЖМ
 	//   OS_OFF=10,	//сигналы выключены в режиме ОС
 	//   UNUSED=11 //неиспользуемое направление
-	Tmin         int    //Последнее заданное Тмин вызвать направления
-	MaskCommand  uint32 //Последняя маска
-	RealWatchDog uint16 //Остаток watchdog
+	Tmin         int      //Последнее заданное Тмин вызвать направления
+	MaskCommand  uint32   //Последняя маска
+	RealWatchDog uint16   //Остаток watchdog
+	TOOBs        []uint16 //Счетчики по направлениям
 }
 
 func (s *StateHard) GetConnect() bool {
@@ -94,7 +96,26 @@ func (s *StateHard) setLastOperation() {
 	defer mutex.Unlock()
 	s.LastOperation = time.Now()
 }
-
+func SetSignalCountDown(counts [64]byte) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if !StateHardware.SourceTOOB {
+		setExternalSourceTOOB()
+	}
+	wh := WriteHolds{Start: 222, Data: make([]uint16, 32)}
+	for i := 0; i < len(wh.Data); i++ {
+		wh.Data[i] = uint16(counts[i])
+	}
+	HoldsCmd <- wh
+}
+func setExternalSourceTOOB() {
+	wh1 := WriteHolds{Start: 186, Data: []uint16{1}}
+	HoldsCmd <- wh1
+	wh2 := WriteHolds{Start: 14104, Data: []uint16{1}}
+	HoldsCmd <- wh2
+	wh3 := WriteHolds{Start: 186, Data: []uint16{2}}
+	HoldsCmd <- wh3
+}
 func SetTLC(watchdog int, sgc [64]bool) {
 	mutex.Lock()
 	defer mutex.Unlock()

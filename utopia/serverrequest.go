@@ -134,16 +134,18 @@ func (t *TlcAndGroupControl) fromData(data []byte) error {
 type CountDown struct {
 	lastop time.Time
 	index  int      //Индекс группы из 8 сигнальных групп
-	count  [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
+	counts [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
 	//Время работы (в секундах, до следующего изменения командой).
 	// Ожидаемое время устанавливается равным 255, если сигнальная группа не доступна.
 }
 
 func (c CountDown) ToString() string {
-	return fmt.Sprintf("Message 08 %s %v ", toString(c.lastop), c.count)
+	return fmt.Sprintf("Message 08 %s %v ", toString(c.lastop), c.counts)
 }
 
 func (c CountDown) execute() {
+	hardware.SetSignalCountDown(c.counts)
+
 	// logger.Debug.Printf("execute CountDown %v", c)
 }
 
@@ -152,13 +154,13 @@ func (c CountDown) toData() []byte {
 	result := make([]byte, 0)
 	result = append(result, 8, byte(c.index))
 	if setup.Set.Utopia.Recode {
-		for i := 7; i < len(c.count); i += 8 {
+		for i := 7; i < len(c.counts); i += 8 {
 			for j := i; j > i-8; j-- {
-				result = append(result, c.count[j])
+				result = append(result, c.counts[j])
 			}
 		}
 	} else {
-		for _, v := range c.count {
+		for _, v := range c.counts {
 			result = append(result, v)
 		}
 	}
@@ -172,18 +174,17 @@ func (c *CountDown) fromData(data []byte) error {
 	c.index = int(data[1])
 	if setup.Set.Utopia.Recode {
 		k := 0
-		for i := 7; i < len(c.count); i += 8 {
+		for i := 7; i < len(c.counts); i += 8 {
 			for j := i; j > i-8; j-- {
-				c.count[k] = data[j+1]
+				c.counts[k] = data[j+1]
 				k++
 			}
 		}
 	} else {
-		for i := 0; i < len(c.count); i++ {
-			c.count[i] = data[i+1]
+		for i := 0; i < len(c.counts); i++ {
+			c.counts[i] = data[i+1]
 		}
 	}
-
 	return nil
 }
 
@@ -199,19 +200,18 @@ type ExtendedCountDown struct {
 	// 1 = Calendar
 	// 2 = Traffic Scenario
 	// 3 = Operator
-	spare [5]byte
-	count [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
+	spare  [5]byte
+	counts [64]byte //Обратный отсчет для группы сигналов. Один байт для каждой СГ.
 	//Время работы (в секундах, до следующего изменения командой).
 	// Ожидаемое время устанавливается равным 255, если сигнальная группа не доступна.
 }
 
 func (e *ExtendedCountDown) ToString() string {
-	return fmt.Sprintf("Message 09 %s %v ", toString(e.lastop), e.count)
+	return fmt.Sprintf("Message 09 %s %v ", toString(e.lastop), e.counts)
 }
 
 func (e *ExtendedCountDown) execute() {
-	// logger.Debug.Printf("execute ExtendedCountDown %v", e)
-
+	hardware.SetSignalCountDown(e.counts)
 }
 
 func (e *ExtendedCountDown) toData() []byte {
@@ -222,13 +222,13 @@ func (e *ExtendedCountDown) toData() []byte {
 		result = append(result, v)
 	}
 	if setup.Set.Utopia.Recode {
-		for i := 7; i < len(e.count); i += 8 {
+		for i := 7; i < len(e.counts); i += 8 {
 			for j := i; j > i-8; j-- {
-				result = append(result, e.count[j])
+				result = append(result, e.counts[j])
 			}
 		}
 	} else {
-		for _, v := range e.count {
+		for _, v := range e.counts {
 			result = append(result, v)
 		}
 	}
@@ -248,15 +248,15 @@ func (e *ExtendedCountDown) fromData(data []byte) error {
 	}
 	if setup.Set.Utopia.Recode {
 		k := 0
-		for i := 7; i < len(e.count); i += 8 {
+		for i := 7; i < len(e.counts); i += 8 {
 			for j := i; j > i-8; j-- {
-				e.count[k] = data[j+10]
+				e.counts[k] = data[j+10]
 				k++
 			}
 		}
 	} else {
-		for i := 0; i < len(e.count); i++ {
-			e.count[i] = data[i+10]
+		for i := 0; i < len(e.counts); i++ {
+			e.counts[i] = data[i+10]
 		}
 	}
 	return nil
