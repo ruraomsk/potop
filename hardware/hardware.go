@@ -93,10 +93,10 @@ func Start() {
 				tickerDebug.Stop()
 			}
 		case wc := <-CoilsCmd:
-			// logger.Debug.Printf("coils cmd %v", wc)
 			StateHardware.setLastOperation()
 			if StateHardware.GetConnect() {
 				if needCoils(wc) {
+					// logger.Debug.Printf("coils cmd %v", wc)
 					err = client.WriteCoils(wc.Start, wc.Data)
 					if err != nil {
 						logger.Error.Print(err.Error())
@@ -106,10 +106,10 @@ func Start() {
 				}
 			}
 		case wh := <-HoldsCmd:
-			// logger.Debug.Printf("holds cmd %v", wh)
 			StateHardware.setLastOperation()
 			if StateHardware.GetConnect() {
 				if needHolds(wh) {
+					// logger.Debug.Printf("holds cmd %v", wh)
 					err = client.WriteRegisters(wh.Start, wh.Data)
 					if err != nil {
 						logger.Error.Print(err.Error())
@@ -169,14 +169,22 @@ func readStatus(utopia bool) error {
 			return fmt.Errorf("write holds 178 %s", err.Error())
 		}
 	}
-	//Обновляем wtchdog если нужно
-	if StateHardware.WatchDog > 0 {
-		StateHardware.WatchDog--
-		err := client.WriteRegister(178, StateHardware.WatchDog)
-		if err != nil {
-			return fmt.Errorf("write holds 178 %s", err.Error())
-		}
+	utopiacmd, err := client.ReadRegisters(175, 4, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return fmt.Errorf("read holds 175 4 %s", err.Error())
 	}
+	StateHardware.Tmin = int(utopiacmd[0])
+	StateHardware.RealWatchDog = utopiacmd[3]
+	StateHardware.MaskCommand = uint32(utopiacmd[1])<<16 | uint32(utopiacmd[2])
+
+	// //Обновляем wtchdog если нужно
+	// if StateHardware.RealWatchDog > 0 {
+	// 	StateHardware.RealWatchDog--
+	// 	err := client.WriteRegister(178, StateHardware.RealWatchDog)
+	// 	if err != nil {
+	// 		return fmt.Errorf("write holds 178 %s", err.Error())
+	// 	}
+	// }
 	//Считываем состояние направлений
 	data, err := client.ReadRegisters(190, 32, modbus.HOLDING_REGISTER)
 	if err != nil {
@@ -202,14 +210,6 @@ func readStatus(utopia bool) error {
 	StateHardware.Dark = coils[0]
 	StateHardware.AllRed = coils[1]
 	StateHardware.Flashing = coils[2]
-	utopiacmd, err := client.ReadRegisters(175, 4, modbus.HOLDING_REGISTER)
-	if err != nil {
-		return fmt.Errorf("read holds 175 4 %s", err.Error())
-	}
-	StateHardware.Tmin = int(utopiacmd[0])
-	StateHardware.RealWatchDog = utopiacmd[3]
-	StateHardware.MaskCommand = uint32(utopiacmd[1])<<16 | uint32(utopiacmd[2])
-	StateHardware.Dark = coils[0]
 
 	//Обновляем источник значений для ТООВ
 	source, err := client.ReadRegisters(14104, 1, modbus.HOLDING_REGISTER)

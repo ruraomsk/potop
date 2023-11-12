@@ -97,8 +97,6 @@ func (s *StateHard) setLastOperation() {
 	s.LastOperation = time.Now()
 }
 func SetSignalCountDown(counts [64]byte) {
-	mutex.Lock()
-	defer mutex.Unlock()
 	if !StateHardware.SourceTOOB {
 		setExternalSourceTOOB()
 	}
@@ -106,6 +104,7 @@ func SetSignalCountDown(counts [64]byte) {
 	for i := 0; i < len(wh.Data); i++ {
 		wh.Data[i] = uint16(counts[i])
 	}
+	// logger.Debug.Printf("%v ", wh)
 	HoldsCmd <- wh
 }
 func setExternalSourceTOOB() {
@@ -117,35 +116,27 @@ func setExternalSourceTOOB() {
 	HoldsCmd <- wh3
 }
 func SetTLC(watchdog int, sgc [64]bool) {
-	mutex.Lock()
-	defer mutex.Unlock()
 	if !StateHardware.Connect {
 		return
 	}
 	StateHardware.WatchDog = uint16(watchdog)
 	wh := WriteHolds{Start: 175, Data: make([]uint16, 4)}
-	b := make([]byte, 4)
-	j := 0
-	l := 7
-	for i := 0; i < 32; i++ {
-		d := 0
+	m := uint32(0)
+	for i := 0; i < 31; i++ {
 		if sgc[i] {
-			d = 1
+			m |= 1
 		}
-		d = d << l
-		b[j] |= byte(d)
-		l--
-		if l < 0 {
-			j++
-			l = 7
-		}
+		m = m << 1
+	}
+	if sgc[31] {
+		m |= 1
 	}
 
-	wh.Data[1] = uint16(b[3])<<8 | uint16(b[2])
-	wh.Data[2] = uint16(b[1])<<8 | uint16(b[0])
+	wh.Data[1] = uint16(m >> 16 & 0xffff)
+	wh.Data[2] = uint16(m & 0xffff)
 	wh.Data[0] = uint16(watchdog)
 	wh.Data[3] = uint16(watchdog)
-
+	// logger.Debug.Printf("%x %v", m, sgc)
 	if StateHardware.Dark || StateHardware.Flashing || StateHardware.AllRed {
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 	}

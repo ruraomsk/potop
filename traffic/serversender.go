@@ -73,7 +73,7 @@ func serverSender(socket net.Conn, sendto chan string, subscription chan bool) {
 				// logger.Debug.Println("Строим ...")
 				moved := make([]move, 0)
 				for i := 1; i <= countCameras; i++ {
-					for j := 0; j < rand.Intn(3); j++ {
+					for j := 0; j < rand.Intn(1); j++ {
 						if rand.Intn(2) == 1 {
 							moved = append(moved, move{zoneid: i, carid: rand.Intn(10000) + 1, cartype: rand.Intn(15) + 1,
 								timeinzone: rand.Float32() * 20})

@@ -67,6 +67,8 @@ func (c *ControllerUtopia) verify() error {
 		count++
 	}
 	c.input = c.input[count:]
+	// logger.Info.Printf("% 02X", c.input)
+
 	if len(c.input) < 9 {
 		return fmt.Errorf("неверная длина сообшения от спот %d", len(c.input))
 	}

@@ -144,26 +144,26 @@ func (c CountDown) ToString() string {
 }
 
 func (c CountDown) execute() {
+	// logger.Debug.Printf("execute CountDown %v", c)
 	hardware.SetSignalCountDown(c.counts)
 
-	// logger.Debug.Printf("execute CountDown %v", c)
 }
 
 func (c CountDown) toData() []byte {
 	// c.lastop = time.Now()
 	result := make([]byte, 0)
 	result = append(result, 8, byte(c.index))
-	if setup.Set.Utopia.Recode {
-		for i := 7; i < len(c.counts); i += 8 {
-			for j := i; j > i-8; j-- {
-				result = append(result, c.counts[j])
-			}
-		}
-	} else {
-		for _, v := range c.counts {
-			result = append(result, v)
-		}
+	// if setup.Set.Utopia.Recode {
+	// 	for i := 7; i < len(c.counts); i += 8 {
+	// 		for j := i; j > i-8; j-- {
+	// 			result = append(result, c.counts[j])
+	// 		}
+	// 	}
+	// } else {
+	for _, v := range c.counts {
+		result = append(result, v)
 	}
+	// }
 	return result
 }
 func (c *CountDown) fromData(data []byte) error {
@@ -172,19 +172,21 @@ func (c *CountDown) fromData(data []byte) error {
 	}
 	c.lastop = time.Now()
 	c.index = int(data[1])
-	if setup.Set.Utopia.Recode {
-		k := 0
-		for i := 7; i < len(c.counts); i += 8 {
-			for j := i; j > i-8; j-- {
-				c.counts[k] = data[j+1]
-				k++
-			}
-		}
-	} else {
-		for i := 0; i < len(c.counts); i++ {
-			c.counts[i] = data[i+1]
-		}
+	// if setup.Set.Utopia.Recode {
+	// 	k := 0
+	// 	for i := 7; i < len(c.counts); i += 8 {
+	// 		for j := i; j > i-8; j-- {
+	// 			c.counts[k] = data[j+2]
+	// 			logger.Debug.Printf("i=%d j=%d k=%d %d", i, j, k, c.counts[k])
+	// 			k++
+	// 		}
+	// 	}
+	// 	logger.Debug.Printf("counts %v", c.counts)
+	// } else {
+	for i := 0; i < len(c.counts); i++ {
+		c.counts[i] = data[i+2]
 	}
+	// }
 	return nil
 }
 
@@ -211,6 +213,7 @@ func (e *ExtendedCountDown) ToString() string {
 }
 
 func (e *ExtendedCountDown) execute() {
+	// logger.Debug.Printf("execute ExtendedCountDown")
 	hardware.SetSignalCountDown(e.counts)
 }
 
@@ -221,20 +224,21 @@ func (e *ExtendedCountDown) toData() []byte {
 	for _, v := range e.spare {
 		result = append(result, v)
 	}
-	if setup.Set.Utopia.Recode {
-		for i := 7; i < len(e.counts); i += 8 {
-			for j := i; j > i-8; j-- {
-				result = append(result, e.counts[j])
-			}
-		}
-	} else {
-		for _, v := range e.counts {
-			result = append(result, v)
-		}
+	// if setup.Set.Utopia.Recode {
+	// 	for i := 7; i < len(e.counts); i += 8 {
+	// 		for j := i; j > i-8; j-- {
+	// 			result = append(result, e.counts[j])
+	// 		}
+	// 	}
+	// } else {
+	for _, v := range e.counts {
+		result = append(result, v)
 	}
+	// }
 	return result
 }
 func (e *ExtendedCountDown) fromData(data []byte) error {
+	// logger.Debug.Printf("fromData ExtendedCountDown start")
 	if data[0] != 9 {
 		return fmt.Errorf("это не сообщение 9")
 	}
@@ -246,19 +250,20 @@ func (e *ExtendedCountDown) fromData(data []byte) error {
 	for i := 0; i < len(e.spare); i++ {
 		e.spare[i] = data[i+5]
 	}
-	if setup.Set.Utopia.Recode {
-		k := 0
-		for i := 7; i < len(e.counts); i += 8 {
-			for j := i; j > i-8; j-- {
-				e.counts[k] = data[j+10]
-				k++
-			}
-		}
-	} else {
-		for i := 0; i < len(e.counts); i++ {
-			e.counts[i] = data[i+10]
-		}
+	// if setup.Set.Utopia.Recode {
+	// 	k := 0
+	// 	for i := 7; i < len(e.counts); i += 8 {
+	// 		for j := i; j > i-8; j-- {
+	// 			e.counts[k] = data[j+10]
+	// 			k++
+	// 		}
+	// 	}
+	// } else {
+	for i := 0; i < len(e.counts); i++ {
+		e.counts[i] = data[i+10]
 	}
+	// }
+	// logger.Debug.Printf("fromData ExtendedCountDown stop")
 	return nil
 }
 
