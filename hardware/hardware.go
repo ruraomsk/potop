@@ -44,7 +44,7 @@ func Start() {
 					DataBits: 8,                               // default, optional
 					Parity:   modbus.PARITY_NONE,              // default, optional
 					StopBits: 2,                               // default if no parity, optional
-					Timeout:  300 * time.Millisecond,
+					Timeout:  3 * time.Second,
 				})
 				if err != nil {
 					logger.Error.Printf("modbus %v", err.Error())
