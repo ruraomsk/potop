@@ -164,7 +164,7 @@ func (s *SignalGroupFeedback) toData() []byte {
 	j := 0
 	l := 4
 	for _, v := range s.states {
-		b[0] |= ((byte(v) & 0xf) << l)
+		b[j] |= ((byte(v) & 0xf) << l)
 		l -= 4
 		if l < 0 {
 			j++
