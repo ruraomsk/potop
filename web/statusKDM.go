@@ -63,10 +63,10 @@ func makeViewKDM(view rui.View) {
 	s := hs.MaskCommand
 	for i := 0; i < 32; i++ {
 		st := "Закрыто"
-		if s&0x80000000 != 0 {
+		if s&0x1 != 0 {
 			st = "Открыто"
 		}
-		s = s << 1
+		s = s >> 1
 		ds := "undef"
 		switch hs.StatusDirs[i] {
 		case 0:
