@@ -32,7 +32,8 @@ func (t *TlcAndGroupControl) ToString() string {
 }
 func (t *TlcAndGroupControl) execute() {
 	// logger.Debug.Printf("execute TlcAndGroupControl %v", t)
-	if t.command == 2 || t.command == 1 {
+
+	if t.command == 2 {
 		hardware.SetTLC(t.watchdog, t.ctrlSG)
 		return
 	}

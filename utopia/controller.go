@@ -118,6 +118,7 @@ func workMessage() {
 			logger.Error.Print(err.Error())
 		}
 		ctrl.TlcAndGroupControl.execute()
+		ctrl.status = ctrl.TlcAndGroupControl.command
 		ctrl.StatusAndDetections.fill()
 		ctrl.sendReplay(ctrl.StatusAndDetections.toData())
 	case 8:
@@ -126,7 +127,9 @@ func workMessage() {
 		if err != nil {
 			logger.Error.Print(err.Error())
 		}
-		ctrl.CountDown.execute()
+		if ctrl.status == 2 {
+			ctrl.CountDown.execute()
+		}
 		ctrl.SignalGroupFeedback.fill()
 		ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
 	case 9:
@@ -135,7 +138,9 @@ func workMessage() {
 		if err != nil {
 			logger.Error.Print(err.Error())
 		}
-		ctrl.ExtendedCountDown.execute()
+		if ctrl.status == 2 {
+			ctrl.ExtendedCountDown.execute()
+		}
 		ctrl.SignalGroupFeedback.fill()
 		ctrl.sendReplay(ctrl.SignalGroupFeedback.toData())
 	case 3:

@@ -107,6 +107,14 @@ func SetSignalCountDown(counts [64]byte) {
 	// logger.Debug.Printf("%v ", wh)
 	HoldsCmd <- wh
 }
+func setInternalSourceTOOB() {
+	wh1 := WriteHolds{Start: 186, Data: []uint16{1}}
+	HoldsCmd <- wh1
+	wh2 := WriteHolds{Start: 14104, Data: []uint16{0}}
+	HoldsCmd <- wh2
+	wh3 := WriteHolds{Start: 186, Data: []uint16{2}}
+	HoldsCmd <- wh3
+}
 func setExternalSourceTOOB() {
 	wh1 := WriteHolds{Start: 186, Data: []uint16{1}}
 	HoldsCmd <- wh1
@@ -256,10 +264,13 @@ func GetDiagnosticUtopia() byte {
 	return result
 }
 func CommandUtopia(cmd int, plan int) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 	if !StateHardware.Connect {
 		return
+	}
+	if StateHardware.SourceTOOB {
+		setInternalSourceTOOB()
 	}
 	switch cmd {
 	case 0:
@@ -268,6 +279,9 @@ func CommandUtopia(cmd int, plan int) {
 	case 1:
 		//Переход в локальный режим
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
+		StateHardware.WatchDog = uint16(0)
+		wh := WriteHolds{Start: 175, Data: make([]uint16, 4)}
+		HoldsCmd <- wh
 	case 3:
 		//Переход в  режим ЖМ
 		if !StateHardware.Flashing {
