@@ -102,6 +102,8 @@ func Start() {
 						logger.Error.Print(err.Error())
 						client.Close()
 						StateHardware.setConnect(false)
+					} else {
+						logger.Debug.Printf("write coils addr=%d %v", wc.Start, wc.Data)
 					}
 				}
 			}
@@ -115,6 +117,8 @@ func Start() {
 						logger.Error.Print(err.Error())
 						client.Close()
 						StateHardware.setConnect(false)
+					} else {
+						logger.Debug.Printf("write coils addr=%d % 02X", wh.Start, wh.Data)
 					}
 				}
 			}
