@@ -17,6 +17,7 @@ baudrate = 19200
 parity = "N"
 uid = 1
 debug = false
+log = true
 
 [trafficdata]
 work = true

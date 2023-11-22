@@ -64,6 +64,10 @@ func Start() {
 				if err != nil {
 					logger.Error.Print(err.Error())
 					continue
+				} else {
+					if setup.Set.Modbus.Log {
+						logger.Debug.Printf("write to 6 1")
+					}
 				}
 				count = 0
 				StateHardware.setConnect(true)
@@ -103,7 +107,9 @@ func Start() {
 						client.Close()
 						StateHardware.setConnect(false)
 					} else {
-						logger.Debug.Printf("write coils addr=%d %v", wc.Start, wc.Data)
+						if setup.Set.Modbus.Log {
+							logger.Debug.Printf("write coils addr=%d %v", wc.Start, wc.Data)
+						}
 					}
 				}
 			}
@@ -118,7 +124,9 @@ func Start() {
 						client.Close()
 						StateHardware.setConnect(false)
 					} else {
-						logger.Debug.Printf("write coils addr=%d % 02X", wh.Start, wh.Data)
+						if setup.Set.Modbus.Log {
+							logger.Debug.Printf("write holds addr=%d % 02X", wh.Start, wh.Data)
+						}
 					}
 				}
 			}
