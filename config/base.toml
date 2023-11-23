@@ -1,6 +1,5 @@
 logpath = "log/"
 id = 104
-
 [utopia]
 debug = false #если истина то запускать имитатор 
 # device = "rtu:///dev/com0"
@@ -8,6 +7,7 @@ device = "/dev/com0"
 baudrate = 38400
 lostControl = 5      #Время потеря контроля Utopia
 recode = true
+tmin = 6
 
 [modbus]
 # device="rtu:///dev/ttyUSB0"
@@ -17,7 +17,7 @@ baudrate = 19200
 parity = "N"
 uid = 1
 debug = false
-log = true
+log = false
 
 [trafficdata]
 work = true

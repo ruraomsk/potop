@@ -27,6 +27,9 @@ ListLayout {
 		TextView {
 			id=idLine2,text = "Line2",text-size="18px",
 		},
+		TextView {
+			id=idLine3,text = "Line3",text-size="18px",
+		},
 		TableView {
 			cell-horizontal-align = left,  title = "Направления", id=idNaps,
 		},
@@ -56,7 +59,7 @@ func makeViewKDM(view rui.View) {
 		toRussian(hs.Dark), toRussian(hs.AllRed), toRussian(hs.Flashing),
 		hs.WatchDog, hs.Plan, hs.Status,
 		source))
-	// rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Направления % 02X </b>", hs.StatusDirs))
+	rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Расшифровка статуса : %s </b>", hardware.GetError()))
 	var content [][]any
 	content = append(content, []any{"Нап", "Задание", "Состояние", "Счетчик ТООВ"})
 	count := 1

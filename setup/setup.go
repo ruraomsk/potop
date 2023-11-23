@@ -39,6 +39,7 @@ type Utopia struct {
 	Debug       bool   `toml:"debug" json:"debug"`
 	LostControl int    `toml:"lostControl" json:"lostControl"`
 	Recode      bool   `toml:"recode" json:"recode"`
+	Tmin        int    `toml:"tmin" json:"min"` //Минимальная длительность фазы
 }
 type TrafficData struct {
 	Work    bool   `toml:"work" json:"work"`

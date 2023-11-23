@@ -54,6 +54,12 @@ const setupText = `
 						NumberPicker {
 							id=idBaudrate,type=editor,min=0,max=115200,value=38400
 						},
+						TextView {
+							text = "Тмин ",text-size="24px",
+						},
+						NumberPicker {
+							id=idTmin,type=editor,min=1,max=60,value=5
+						},
 					]
 				},
 				TextView {
@@ -194,6 +200,7 @@ func setupShow(session rui.Session) rui.View {
 	rui.Set(view, "idUid", "value", setup.ExtSet.Modbus.UId)
 	rui.Set(view, "idUtopia", "text", setup.ExtSet.Utopia.Device)
 	rui.Set(view, "idBaudrate", "value", setup.ExtSet.Utopia.BaudRate)
+	rui.Set(view, "idTmin", "value", setup.ExtSet.Utopia.Tmin)
 
 	rui.Set(view, "setUpdate", rui.ClickEvent, func(rui.View) {
 
@@ -218,7 +225,8 @@ func setupShow(session rui.Session) rui.View {
 		logger.Info.Printf("Изменили КДМ на %s uid %d", setup.ExtSet.Modbus.Device, setup.ExtSet.Modbus.UId)
 		setup.ExtSet.Utopia.Device = rui.GetText(view, "idUtopia")
 		setup.ExtSet.Utopia.BaudRate = getInteger(rui.Get(view, "idBaudrate", "value"))
-		logger.Info.Printf("Изменили Utopia на %s baudrate %d", setup.ExtSet.Utopia.Device, setup.ExtSet.Utopia.BaudRate)
+		setup.ExtSet.Utopia.Tmin = getInteger(rui.Get(view, "idTmin", "value"))
+		logger.Info.Printf("Изменили Utopia на %s baudrate %d и Тмин %d", setup.ExtSet.Utopia.Device, setup.ExtSet.Utopia.BaudRate, setup.ExtSet.Utopia.Tmin)
 		saveAndExit <- 1
 	})
 

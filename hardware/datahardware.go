@@ -1,7 +1,10 @@
 package hardware
 
 import (
+	"fmt"
 	"time"
+
+	"github.com/ruraomsk/potop/setup"
 )
 
 type WriteHolds struct {
@@ -142,7 +145,10 @@ func SetTLC(watchdog int, sgc [64]bool) {
 
 	wh.Data[1] = uint16(m >> 16 & 0xffff)
 	wh.Data[2] = uint16(m & 0xffff)
-	wh.Data[0] = uint16(watchdog)
+	wh.Data[0] = uint16(setup.Set.Utopia.Tmin)
+	if m == 0 {
+		wh.Data[0] = 0
+	}
 	wh.Data[3] = uint16(watchdog)
 	// logger.Debug.Printf("%x %v", m, sgc)
 	if StateHardware.Dark || StateHardware.Flashing || StateHardware.AllRed {
@@ -313,4 +319,45 @@ func GetStateHard() StateHard {
 	mutex.Lock()
 	defer mutex.Unlock()
 	return StateHardware
+}
+func GetError() string {
+	mutex.Lock()
+	defer mutex.Unlock()
+	switch StateHardware.Status[0] {
+	case 0:
+		return "Нет ошибок"
+	case 1:
+		return fmt.Sprintf("Лампа сгорела, контроль красных плата %d ключ %d",
+			StateHardware.Status[1], StateHardware.Status[2])
+	case 2:
+		return fmt.Sprintf("Лампа сгорела, контроль зеленых плата %d ключ %d",
+			StateHardware.Status[1], StateHardware.Status[2])
+	case 3:
+		return "Нет ответа от микросхемы аппаратных часов"
+	case 4:
+		return "Нет сигнала от GPS приемника"
+	case 5:
+		return fmt.Sprintf("Нет ответа от платы силовых ключей плата %d",
+			StateHardware.Status[1])
+	case 6:
+		return fmt.Sprintf("Нет ответа от платы ввода-вывода плата %d",
+			StateHardware.Status[1])
+	case 7:
+		return fmt.Sprintf("КЗ цепи кнопки КВП %d",
+			StateHardware.Status[1])
+	case 8:
+		return "версия файла конфигурации в ПЗУ не соответствует требуемой"
+	case 9:
+		return "контрольная сумма файла конфигурации в ПЗУ показывает ошибку"
+	case 10:
+		return fmt.Sprintf("обнаружен конфликт направлений %d",
+			StateHardware.Status[1])
+	case 11:
+		return fmt.Sprintf("команда от сети обнаружен конфликт направлений %d",
+			StateHardware.Status[1])
+	case 12:
+		return "не вхождение в координацию"
+	}
+
+	return fmt.Sprintf("Ошибка %v", StateHardware.Status)
 }
