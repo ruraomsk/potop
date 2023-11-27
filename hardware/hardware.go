@@ -31,7 +31,7 @@ func Start() {
 	CoilsCmd = make(chan WriteCoils)
 	SetWork = make(chan int)
 	tickerConnect := time.NewTicker(5 * time.Second)
-	tickerStatus := time.NewTicker(time.Second)
+	tickerStatus := time.NewTicker(300 * time.Millisecond)
 	tickerDebug := time.NewTicker(time.Second)
 	for {
 		select {
