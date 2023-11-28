@@ -33,6 +33,7 @@ func Start() {
 	tickerConnect := time.NewTicker(5 * time.Second)
 	tickerStatus := time.NewTicker(300 * time.Millisecond)
 	tickerDebug := time.NewTicker(time.Second)
+cycle:
 	for {
 		select {
 		case <-tickerConnect.C:
@@ -63,13 +64,56 @@ func Start() {
 				err = client.WriteRegister(6, 1)
 				if err != nil {
 					logger.Error.Print(err.Error())
+					client.Close()
 					continue
 				} else {
 					if setup.Set.Modbus.Log {
 						logger.Debug.Printf("write to 6 1")
 					}
 				}
+				//Готовим его к работе с Utopia
+				/*
+				   Останется один момент, как красиво перевести контроллер под управление утопии.
+				   Для этого нужно дать команду с нулевой маской "начало фазы" и ждать пока
+				   контроллер покажет в регистре 29 значение 35 или 36 – внешний вызов направлений.
+				   После этого лучше подождать пока пройдет время промтакта.
+				*/
+				err = client.WriteRegisters(175, []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, 0})
+				if err != nil {
+					logger.Error.Print(err.Error())
+					client.Close()
+					continue
+				} else {
+					if setup.Set.Modbus.Log {
+						logger.Debug.Printf("write to 175")
+					}
+				}
 				count = 0
+				resp := uint16(0)
+				for {
+					time.Sleep(time.Second)
+					resp, err = client.ReadRegister(29, modbus.HOLDING_REGISTER)
+					if err != nil {
+						logger.Error.Print(err.Error())
+						client.Close()
+						continue cycle
+					} else {
+						if setup.Set.Modbus.Log {
+							logger.Debug.Printf("read from 29")
+						}
+					}
+					if resp == 35 || resp == 36 {
+						break
+					} else {
+						count++
+						if count > 100 {
+							logger.Error.Printf("Слишком долго не переходит под управление UTOPIA")
+							client.Close()
+							continue cycle
+						}
+					}
+				}
+				time.Sleep(5 * time.Second)
 				StateHardware.setConnect(true)
 				nowCoils = make(map[uint16][]bool)
 				nowHolds = make(map[uint16][]uint16)
