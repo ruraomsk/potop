@@ -33,7 +33,7 @@ func Start() {
 	tickerConnect := time.NewTicker(5 * time.Second)
 	tickerStatus := time.NewTicker(300 * time.Millisecond)
 	tickerDebug := time.NewTicker(time.Second)
-cycle:
+	// cycle:
 	for {
 		select {
 		case <-tickerConnect.C:
@@ -89,31 +89,31 @@ cycle:
 					}
 				}
 				count = 0
-				resp := uint16(0)
-				for {
-					time.Sleep(time.Second)
-					resp, err = client.ReadRegister(29, modbus.HOLDING_REGISTER)
-					if err != nil {
-						logger.Error.Print(err.Error())
-						client.Close()
-						continue cycle
-					} else {
-						if setup.Set.Modbus.Log {
-							logger.Debug.Printf("read from 29")
-						}
-					}
-					if resp == 35 || resp == 36 {
-						break
-					} else {
-						count++
-						if count > 100 {
-							logger.Error.Printf("Слишком долго не переходит под управление UTOPIA")
-							client.Close()
-							continue cycle
-						}
-					}
-				}
-				time.Sleep(5 * time.Second)
+				// resp := uint16(0)
+				// for {
+				// 	time.Sleep(time.Second)
+				// 	resp, err = client.ReadRegister(29, modbus.HOLDING_REGISTER)
+				// 	if err != nil {
+				// 		logger.Error.Print(err.Error())
+				// 		client.Close()
+				// 		continue cycle
+				// 	} else {
+				// 		if setup.Set.Modbus.Log {
+				// 			logger.Debug.Printf("read from 29")
+				// 		}
+				// 	}
+				// 	if resp == 35 || resp == 36 {
+				// 		break
+				// 	} else {
+				// 		count++
+				// 		if count > 100 {
+				// 			logger.Error.Printf("Слишком долго не переходит под управление UTOPIA")
+				// 			client.Close()
+				// 			continue cycle
+				// 		}
+				// 	}
+				// }
+				time.Sleep(time.Duration(setup.Set.Utopia.Tmin) * time.Second)
 				StateHardware.setConnect(true)
 				nowCoils = make(map[uint16][]bool)
 				nowHolds = make(map[uint16][]uint16)
