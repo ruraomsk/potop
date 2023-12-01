@@ -6,6 +6,7 @@ import (
 
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/hardware"
+	"github.com/ruraomsk/potop/setup"
 )
 
 // From Spot to the controller					Reply from controller
@@ -74,7 +75,7 @@ func controlUtopiaServer() {
 				timer = time.NewTimer(getDuration())
 			}
 		}
-		logger.Error.Print("Погеряно управление от utopia")
+		logger.Error.Print("Потеряно управление от utopia")
 	}
 
 }
@@ -84,7 +85,13 @@ func Controller() {
 	for {
 		ctrl.input = <-fromServer
 		live <- 0
-		workMessage()
+		if hardware.IsConnectedKDM() {
+			workMessage()
+		} else {
+			if setup.Set.Utopia.Replay {
+				workMessage()
+			}
+		}
 	}
 }
 func workMessage() {

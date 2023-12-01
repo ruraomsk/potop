@@ -204,9 +204,9 @@ type ExtError struct {
 func (e *ExtendedDiagnostic) fill() {
 	e.lastop = time.Now()
 	e.Extrrors = make([]ExtError, 0)
-	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 1, 0}})
-	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{12, 0, 0}})
-	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{4, 3, 1}})
+	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 0, 0}})
+	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 0, 0}})
+	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 3, 1}})
 }
 
 func (e *ExtendedDiagnostic) toData() []byte {

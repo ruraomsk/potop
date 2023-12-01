@@ -163,6 +163,9 @@ func GetPlan() int {
 
 	return StateHardware.Plan
 }
+func IsConnectedKDM() bool {
+	return StateHardware.GetConnect()
+}
 func GetStatusDirs() []uint8 {
 	mutex.Lock()
 	defer mutex.Unlock()
