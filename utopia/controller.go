@@ -43,7 +43,7 @@ var ctrl = ControllerUtopia{id: 1, lastACK: 0, input: make([]byte, 0), output: m
 var mutex sync.Mutex
 
 func getDuration() time.Duration {
-	return 5 * time.Second
+	return 20 * time.Second
 }
 
 var live chan any
