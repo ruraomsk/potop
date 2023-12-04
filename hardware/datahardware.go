@@ -220,6 +220,9 @@ func GetStatusDirs() []uint8 {
 func GetStatusUtopia() byte {
 	mutex.Lock()
 	defer mutex.Unlock()
+	if !StateHardware.Connect {
+		return 0
+	}
 	if StateHardware.Dark {
 		return 6
 	}
