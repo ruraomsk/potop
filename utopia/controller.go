@@ -117,6 +117,10 @@ func workMessage() {
 		ctrl.sendLive()
 		return
 	}
+	if !hardware.IsConnectedKDM() {
+		ctrl.sendLive()
+		return
+	}
 	switch ctrl.input[6] {
 	case 2:
 		// Message 2 – TLC and group control
