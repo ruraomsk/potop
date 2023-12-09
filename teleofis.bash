@@ -6,6 +6,6 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 echo 'Copy potop to device'
-scp potop root@192.168.88.1:/root
-#scp goirz.sh root@192.168.88.1:/root
-# scp rc.local root@192.168.88.1:/etc
+tar -czvf potop.tar.gz potop
+scp  potop.tar.gz root@192.168.88.1:/root 
+scp gopotop.sh root@192.168.88.1:/root 

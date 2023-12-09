@@ -9,7 +9,7 @@ theme {
 	},
 	constants = _{
 		optionsFont = sans-serif,
-		optionsTextSize = 10pt,
+		optionsTextSize = 11pt,
 	},
 	styles = [
 		showPage {
@@ -33,7 +33,8 @@ theme {
 			text-color = @optionsTextColor,
 			font = @optionsFont,
 			text-size = @optionsTextSize,
-			padding = 8px,
+			padding = 32px,
+			horizontal-align = center,
 			orientation = vertical,
 		},
 		optionsTable {
@@ -68,15 +69,13 @@ theme {
 			text-indent = 2em,
 			margin-bottom = 0.5em,
 		},
-		tableHead1 {
-			background-color = #FFDDDDDD,
+		table {
 			text-align = left,
 			table-vertical-align = top,
 			text-weight = normal,
-			italic = true,
-			border = _{ top = _{style = solid, color = black, width = 4px }, bottom = _{style = solid, color = black, width = 4px } },
 			cell-border = _{ style = dashed, color = gray, width = 1px },
 			cell-padding = 8px,
+			text-size = 8pt,
 		},
 		tableHead2 {
 

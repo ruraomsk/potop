@@ -25,6 +25,9 @@ func GetValues() string {
 	defer eh.lock.Unlock()
 	return fmt.Sprintf("%s %v", eh.uptime.Format("15:04:05"), eh.dates)
 }
+func GetWork() bool {
+	return work
+}
 func GetStatus() string {
 	if setup.Set.ModbusRadar.Master {
 		return fmt.Sprintf("master for %s:%d id=%d", setup.Set.ModbusRadar.Host, setup.Set.ModbusRadar.Port, setup.Set.ModbusRadar.ID)

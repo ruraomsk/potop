@@ -6,6 +6,7 @@ import (
 
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/hardware"
+	"github.com/ruraomsk/potop/journal"
 	"github.com/ruraomsk/potop/setup"
 )
 
@@ -58,11 +59,13 @@ func controlUtopiaServer() {
 	var timer *time.Timer
 	hardware.SetWork <- 0
 	logger.Info.Print("Нет управления от utopia")
+	journal.SendMessage(2, "Нет управления от utopia")
 	for {
 		<-live
 		hardware.SetWork <- 1
 		timer = time.NewTimer(getDuration())
 		logger.Info.Print("Есть управление от utopia")
+		journal.SendMessage(2, "Есть управление от utopia")
 		hardware.SetWork <- 1
 	loop:
 		for {
@@ -76,6 +79,7 @@ func controlUtopiaServer() {
 			}
 		}
 		logger.Error.Print("Потеряно управление от utopia")
+		journal.SendMessage(2, "Потеряно управление от utopia")
 	}
 
 }

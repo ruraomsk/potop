@@ -69,7 +69,9 @@ func GetValues() string {
 func GetStatus() string {
 	return fmt.Sprintf("Server %s:%d", setup.Set.TrafficData.Host, setup.Set.TrafficData.Port)
 }
-
+func GetWork() bool {
+	return workClient
+}
 func Start(diap int) {
 	diapazon = diap
 	if setup.Set.TrafficData.Debug {

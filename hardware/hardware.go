@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/journal"
 	"github.com/ruraomsk/potop/setup"
 	"github.com/simonvetter/modbus"
 )
@@ -38,6 +39,7 @@ func Start() {
 		select {
 		case <-tickerConnect.C:
 			if !StateHardware.GetConnect() {
+				journal.SendMessage(1, "КДМ не подключен")
 				// for an RTU (serial) device/bus
 				client, err = modbus.NewClient(&modbus.ClientConfiguration{
 					URL:      setup.Set.Modbus.Device,         //"rtu:///dev/ttyUSB0",
@@ -89,34 +91,11 @@ func Start() {
 					}
 				}
 				count = 0
-				// resp := uint16(0)
-				// for {
-				// 	time.Sleep(time.Second)
-				// 	resp, err = client.ReadRegister(29, modbus.HOLDING_REGISTER)
-				// 	if err != nil {
-				// 		logger.Error.Print(err.Error())
-				// 		client.Close()
-				// 		continue cycle
-				// 	} else {
-				// 		if setup.Set.Modbus.Log {
-				// 			logger.Debug.Printf("read from 29")
-				// 		}
-				// 	}
-				// 	if resp == 35 || resp == 36 {
-				// 		break
-				// 	} else {
-				// 		count++
-				// 		if count > 100 {
-				// 			logger.Error.Printf("Слишком долго не переходит под управление UTOPIA")
-				// 			client.Close()
-				// 			continue cycle
-				// 		}
-				// 	}
-				// }
 				time.Sleep(time.Duration(setup.Set.Utopia.Tmin) * time.Second)
 				StateHardware.setConnect(true)
 				nowCoils = make(map[uint16][]bool)
 				nowHolds = make(map[uint16][]uint16)
+				journal.SendMessage(1, "КДМ подключен")
 			}
 		case cmd := <-SetWork:
 			if cmd == 0 {
@@ -130,9 +109,11 @@ func Start() {
 				err = readStatus(StateHardware.getUtopia())
 				if err != nil {
 					logger.Error.Print(err.Error())
+					journal.SendMessage(1, err.Error())
 					client.Close()
 					StateHardware.setConnect(false)
 				}
+				journal.SendMessage(1, GetError())
 			}
 		case <-tickerDebug.C:
 			if setup.Set.Modbus.Debug {

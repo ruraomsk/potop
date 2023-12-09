@@ -14,6 +14,7 @@ import (
 
 	"github.com/ruraomsk/ag-server/logger"
 	"github.com/ruraomsk/potop/hardware"
+	"github.com/ruraomsk/potop/journal"
 	"github.com/ruraomsk/potop/radar"
 	"github.com/ruraomsk/potop/setup"
 	"github.com/ruraomsk/potop/stat"
@@ -49,6 +50,7 @@ func main() {
 	}
 	fmt.Println("Potop start")
 	logger.Info.Println("Potop start")
+	go journal.LoggerStart()
 	go utopia.Transport()
 	go hardware.Start()
 

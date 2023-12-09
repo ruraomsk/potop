@@ -109,6 +109,7 @@ func (d *NowSession) OnReconnect(session rui.Session) {
 func CreateSession(_ rui.Session) rui.SessionContent {
 	sessionContent := new(NowSession)
 	sessionContent.pages = []Page{
+		{"Главный экран", mainScreen, nil},
 		{"Текущее состояние", statusShow, nil},
 		{"Utopia", statusUtopia, nil},
 		{"Состояние КДМ", statusKDM, nil},
@@ -186,7 +187,7 @@ func Web() {
 	logger.Info.Printf("Start web to %s ", addr)
 	// addr := "localhost:8000"
 	local := "localhost:8000"
-	if rui.GetLocalIP() == "172.168.2.100" || rui.GetLocalIP() == "172.16.58.1" {
+	if rui.GetLocalIP() == "172.168.2.100" || rui.GetLocalIP() == "172.16.58.1" || rui.GetLocalIP() == "192.168.88.2" || rui.GetLocalIP() == "192.168.1.52" {
 		rui.OpenBrowser("http://" + local)
 	}
 	rui.StartApp(addr, CreateSession, rui.AppParams{
