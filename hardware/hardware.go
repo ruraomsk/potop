@@ -2,7 +2,6 @@ package hardware
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -33,7 +32,6 @@ func Start() {
 	SetWork = make(chan int)
 	tickerConnect := time.NewTicker(5 * time.Second)
 	tickerStatus := time.NewTicker(500 * time.Millisecond)
-	tickerDebug := time.NewTicker(time.Second)
 	// cycle:
 	for {
 		select {
@@ -80,7 +78,7 @@ func Start() {
 				   контроллер покажет в регистре 29 значение 35 или 36 – внешний вызов направлений.
 				   После этого лучше подождать пока пройдет время промтакта.
 				*/
-				err = client.WriteRegisters(175, []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, 0})
+				err = client.WriteRegisters(175, []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, uint16(setup.Set.Utopia.Tmin)})
 				if err != nil {
 					logger.Error.Print(err.Error())
 					client.Close()
@@ -106,7 +104,7 @@ func Start() {
 			}
 		case <-tickerStatus.C:
 			if StateHardware.GetConnect() {
-				err = readStatus(StateHardware.getUtopia())
+				err = readStatus(!GetAutonom())
 				if err != nil {
 					logger.Error.Print(err.Error())
 					journal.SendMessage(1, err.Error())
@@ -114,12 +112,6 @@ func Start() {
 					StateHardware.setConnect(false)
 				}
 				journal.SendMessage(1, GetError())
-			}
-		case <-tickerDebug.C:
-			if setup.Set.Modbus.Debug {
-				fillDebugData(StateHardware.getUtopia())
-			} else {
-				tickerDebug.Stop()
 			}
 		case wc := <-CoilsCmd:
 			StateHardware.setLastOperation()
@@ -262,46 +254,12 @@ func readStatus(utopia bool) error {
 		return fmt.Errorf("read holds 222 32 %s", err.Error())
 	}
 	copy(StateHardware.TOOBs, toobs)
+
+	status, err = client.ReadRegisters(28, 2, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return fmt.Errorf("read holds 28 2 %s", err.Error())
+	}
+	StateHardware.Plan = int(status[0])
+	StateHardware.Phase = int(status[1])
 	return nil
-}
-func fillDebugData(utopia bool) {
-	if !utopia {
-		//utopia отключена
-		StateHardware.WatchDog = 0
-	}
-	//Обновляем wtchdog если нужно
-	if StateHardware.WatchDog > 0 {
-		StateHardware.WatchDog--
-	}
-	//Считываем состояние направлений
-	data := make([]uint16, 0)
-	for i := 0; i < 32; i++ {
-		data = append(data, uint16(rand.Intn(11)))
-	}
-	for i, v := range data {
-		StateHardware.StatusDirs[i] = uint8(v)
-	}
-	//Обновляем статус КДМ в его кодах
-	status := []uint16{uint16(rand.Intn(12)), uint16(rand.Intn(10)), uint16(rand.Intn(10)), uint16(rand.Intn(10))}
-	for i, v := range status {
-		StateHardware.Status[i] = uint8(v)
-	}
-	//Обновляем информацию о спец режимах
-	coils := make([]bool, 3)
-	for i := 0; i < 3; i++ {
-		if rand.Intn(10) < 5 {
-			coils = append(coils, false)
-		} else {
-			coils = append(coils, true)
-		}
-	}
-
-	StateHardware.Dark = coils[0]
-	StateHardware.AllRed = coils[1]
-	StateHardware.Flashing = coils[2]
-
-	StateHardware.Tmin = rand.Intn(50)
-	StateHardware.RealWatchDog = uint16(rand.Intn(50))
-	StateHardware.MaskCommand = rand.Uint32()
-	// StateHardware.MaskCommand = uint32(rand.Intn(32000))<<16 | uint32(rand.Intn(32000))
 }

@@ -23,9 +23,11 @@ type StateHard struct {
 	Dark          bool   //true если Режим ОС
 	AllRed        bool   //true если Режим Кругом Красный
 	Flashing      bool   //true если Режим Желтый Мигающий
+	Autonom       bool   //true если автономный режим команды центра не проходят
 	SourceTOOB    bool   //true если Источник времени отсчета внешний
 	WatchDog      uint16 //Текущий Тайм аут управления
 	Plan          int    //Номер исполняемого плана контроллером КДМ
+	Phase         int    //Номер исполняемой фазы контроллером КДМ
 	// typedef enum {					//Идентификаторы событий в логе аварий и в регистре событий
 	// 	ALL_IS_GOOD = 0,			//Все хорошо, нет предупреждений
 	// 	LOW_CURRENT_RED_LAMP,			//Ток через открытый ключ меньше минимального - лампа сгорела, применяется при контроле красных
@@ -160,8 +162,12 @@ func SetTLC(watchdog int, sgc [64]bool) {
 func GetPlan() int {
 	mutex.Lock()
 	defer mutex.Unlock()
-
 	return StateHardware.Plan
+}
+func GetPhase() int {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return StateHardware.Phase
 }
 func IsConnectedKDM() bool {
 	return StateHardware.GetConnect()
@@ -275,7 +281,7 @@ func GetDiagnosticUtopia() byte {
 	}
 	return result
 }
-func CommandUtopia(cmd int, plan int) {
+func CommandUtopia(cmd int, value int) {
 	// mutex.Lock()
 	// defer mutex.Unlock()
 	if !StateHardware.Connect {
@@ -286,7 +292,12 @@ func CommandUtopia(cmd int, plan int) {
 	}
 	switch cmd {
 	case 0:
-		//no command
+		//Перейти в автономный режим
+		if value == 0 {
+			SetAutonom(false)
+		} else {
+			SetAutonom(true)
+		}
 		return
 	case 1:
 		//Переход в локальный режим
@@ -318,8 +329,19 @@ func CommandUtopia(cmd int, plan int) {
 			StateHardware.WatchDog = 0
 			HoldsCmd <- WriteHolds{Start: 178, Data: []uint16{0}}
 		}
-		HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{uint16(plan)}}
+		HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{uint16(value)}}
+	case 8:
+		//Включить фазу
+		if StateHardware.Dark || StateHardware.Flashing || StateHardware.AllRed {
+			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
+		}
+		if StateHardware.WatchDog != 0 {
+			StateHardware.WatchDog = 0
+			HoldsCmd <- WriteHolds{Start: 178, Data: []uint16{0}}
+		}
+		HoldsCmd <- WriteHolds{Start: 179, Data: []uint16{uint16(value)}}
 	}
+
 }
 func GetStateHard() StateHard {
 	mutex.Lock()
@@ -366,4 +388,14 @@ func GetError() string {
 	}
 
 	return fmt.Sprintf("Ошибка %v", StateHardware.Status)
+}
+func SetAutonom(set bool) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	StateHardware.Autonom = set
+}
+func GetAutonom() bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return StateHardware.Autonom
 }

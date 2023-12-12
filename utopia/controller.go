@@ -121,7 +121,7 @@ func workMessage() {
 		ctrl.sendLive()
 		return
 	}
-	if !hardware.IsConnectedKDM() {
+	if !hardware.IsConnectedKDM() || hardware.GetAutonom() {
 		ctrl.sendLive()
 		return
 	}

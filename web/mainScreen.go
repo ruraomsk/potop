@@ -44,6 +44,11 @@ ListLayout {
 				},
 				TextView {
 					row = 0, column = 4,
+					id="isAutonom",text-align = center,
+					text = "АВТОНОМ",background-color=gray,
+				},
+				TextView {
+					row = 0, column = 5,
 					id="time",
 					text = "Текушее время",color=red,
 				},
@@ -104,8 +109,12 @@ ListLayout {
 							id=setDarkOn,content="ОС вкл"
 						},
 						Button {
-							row = 5, column = 0:2,
-							id=setLocal,content="Вернуть в ЛР"
+							row = 5, column = 0,
+							id=setAutoOn,content="Автоном вкл"
+						},
+						Button {
+							row = 5, column = 1,
+							id=setAutoOff,content="Автоном выкл"
 						},
 						Button {
 							row = 6, column = 0:1,
@@ -114,6 +123,14 @@ ListLayout {
 						NumberPicker {
 							row = 6, column = 2,
 							id=idPlan,type=editor,min=0,max=32,value=0
+						},
+						Button {
+							row = 7, column = 0:1,
+							id=setPhase,content="Установить Фазу"
+						},
+						NumberPicker {
+							row = 7, column = 2,
+							id=idPhase,type=editor,min=0,max=32,value=0
 						},
 
 					]
@@ -128,6 +145,43 @@ ListLayout {
 }
 `
 
+func PlanToString(plan int) string {
+	if plan == 0 {
+		return "ЛПУ"
+	}
+	if plan == 25 {
+		return "ОС"
+	}
+	if plan == 26 {
+		return "КК"
+	}
+	if plan == 27 {
+		return "ЖМ"
+	}
+	if plan == 28 {
+		return "ВУ"
+	}
+	return fmt.Sprintf("%d", plan)
+}
+func PhaseToString(phase int) string {
+	if phase == 0 {
+		return "KK"
+	}
+	if phase == 33 {
+		return "ЖМ"
+	}
+	if phase == 34 {
+		return "ОС"
+	}
+	if phase == 35 || phase == 36 {
+		return "ВУ"
+	}
+	if phase == 255 {
+		return "ПТ"
+	}
+	return fmt.Sprintf("%d", phase)
+
+}
 func updateMessages(view rui.View) {
 	var content [][]any
 	content = append(content, []any{"Время", "Сообщение"})
@@ -159,13 +213,21 @@ func makeButtonOnScreen(view rui.View) {
 		hardware.CommandUtopia(6, 0)
 		logger.Info.Printf("Оператор установил ОС")
 	})
-	rui.Set(view, "setLocal", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(1, 0)
-		logger.Info.Printf("Оператор перевел в ЛР")
+	rui.Set(view, "setAutoOn", rui.ClickEvent, func(rui.View) {
+		hardware.CommandUtopia(0, 1)
+		logger.Info.Printf("Оператор перевел в Автоном")
+	})
+	rui.Set(view, "setAutoOff", rui.ClickEvent, func(rui.View) {
+		hardware.CommandUtopia(0, 0)
+		logger.Info.Printf("Оператор отключил Автоном")
 	})
 	rui.Set(view, "setPlan", rui.ClickEvent, func(rui.View) {
 		hardware.CommandUtopia(7, getInteger(rui.Get(view, "idPlan", "value")))
 		logger.Info.Printf("Оператор вызвал план %d", getInteger(rui.Get(view, "idPlan", "value")))
+	})
+	rui.Set(view, "setPhase", rui.ClickEvent, func(rui.View) {
+		hardware.CommandUtopia(8, getInteger(rui.Get(view, "idPhase", "value")))
+		logger.Info.Printf("Оператор вызвал фазу %d", getInteger(rui.Get(view, "idPhase", "value")))
 	})
 
 }
@@ -192,8 +254,8 @@ func updatePartKDM(view rui.View) {
 		source = "внешний"
 	}
 	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Последняя команда в</b> %s <b>Тмин=%d Маска=%x остаток watchdog=%d</b>", toString(hs.LastOperation), hs.Tmin, hs.MaskCommand, hs.RealWatchDog))
-	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>WatchDog</b> %d <b>План</b> %d <b>Статус КДМ</b> % 02X <b>Источник ТООВ</b> %s",
-		hs.WatchDog, hs.Plan, hs.Status, source))
+	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>WatchDog</b> %d <b>План</b> %s <b>Фаза</b> %s <b>Статус КДМ</b> % 02X <b>Источник ТООВ</b> %s",
+		hs.WatchDog, PlanToString(hs.Plan), PhaseToString(hs.Phase), hs.Status, source))
 	rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Расшифровка статуса : %s </b>", hardware.GetError()))
 	var content [][]any
 	content = append(content, []any{"Нап", "Задание", "Состояние", "Счетчик ТООВ"})
@@ -272,6 +334,11 @@ func updateHeader(view rui.View) {
 		} else {
 			rui.Set(view, "isTrafficData", "background-color", "gray")
 		}
+	}
+	if hardware.GetAutonom() {
+		rui.Set(view, "isAutonom", "background-color", "green")
+	} else {
+		rui.Set(view, "isAutonom", "background-color", "gray")
 	}
 }
 func makeMainScreen(view rui.View) {
