@@ -6,6 +6,7 @@ import (
 
 	"github.com/anoshenko/rui"
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/diagramm"
 	"github.com/ruraomsk/potop/hardware"
 	"github.com/ruraomsk/potop/journal"
 	"github.com/ruraomsk/potop/radar"
@@ -138,6 +139,10 @@ ListLayout {
 			]
 		},
 		TableView {
+			style=table,semantic=code,
+			cell-horizontal-align = left,  title = "Диаграма", id=idDiagramm,
+		},
+		TableView {
 			style=table,
 			cell-horizontal-align = left,  title = "Диагностика", id=idDiags,
 		},
@@ -182,6 +187,43 @@ func PhaseToString(phase int) string {
 	return fmt.Sprintf("%d", phase)
 
 }
+func updateDiagramm(view rui.View) {
+	var content [][]any
+
+	ms, times := diagramm.GetDiagramm(time.Now().Add(-80*time.Second), time.Now())
+	h := make([]any, 0)
+	h = append(h, "Канал")
+	for _, v := range times {
+		h = append(h, v.Second())
+	}
+	for i := 0; i < 80-len(times); i++ {
+		h = append(h, "  ")
+	}
+
+	content = append(content, h)
+	count := 1
+	for _, v := range ms {
+		if v.View {
+			r := make([]any, 0)
+			r = append(r, v.Chanel)
+			for _, k := range v.Data {
+				r = append(r, k)
+			}
+			for i := 0; i < 80-len(r); i++ {
+				r = append(r, "__")
+			}
+			content = append(content, r)
+			count++
+		}
+	}
+	rui.SetParams(view, "idDiagramm", rui.Params{
+		rui.Content:             content,
+		rui.HeadHeight:          1,
+		rui.CellPadding:         "1px",
+		rui.CellHorizontalAlign: "left",
+	})
+
+}
 func updateMessages(view rui.View) {
 	var content [][]any
 	content = append(content, []any{"Время", "Сообщение"})
@@ -190,7 +232,6 @@ func updateMessages(view rui.View) {
 	for _, v := range ms {
 		content = append(content, []any{toString(v.Time), v.Value})
 		count++
-
 	}
 	rui.SetParams(view, "idDiags", rui.Params{
 		rui.Content:             content,
@@ -258,7 +299,11 @@ func updatePartKDM(view rui.View) {
 		hs.WatchDog, PlanToString(hs.Plan), PhaseToString(hs.Phase), hs.Status, source))
 	rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Расшифровка статуса : %s </b>", hardware.GetError()))
 	var content [][]any
-	content = append(content, []any{"Нап", "Задание", "Состояние", "Счетчик ТООВ"})
+	if hs.SourceTOOB {
+		content = append(content, []any{"Нап", "Задание", "Состояние", "Счетчик ТООВ"})
+	} else {
+		content = append(content, []any{"Нап", "Состояние", "Счетчик ТООВ"})
+	}
 	count := 1
 	s := hs.MaskCommand
 	for i := 0; i < 32; i++ {
@@ -268,6 +313,9 @@ func updatePartKDM(view rui.View) {
 		}
 		s = s >> 1
 		ds := "undef"
+		if hs.StatusDirs[i] == 11 {
+			continue
+		}
 		switch hs.StatusDirs[i] {
 		case 0:
 			ds = "все сигналы выключены"
@@ -296,7 +344,11 @@ func updatePartKDM(view rui.View) {
 		default:
 			ds = "error code"
 		}
-		content = append(content, []any{i, st, ds, hs.TOOBs[i]})
+		if hs.SourceTOOB {
+			content = append(content, []any{i, st, ds, hs.TOOBs[i]})
+		} else {
+			content = append(content, []any{i, ds, hs.TOOBs[i]})
+		}
 		count++
 	}
 	rui.SetParams(view, "idNaps", rui.Params{
@@ -347,6 +399,7 @@ func makeMainScreen(view rui.View) {
 	updatePartKDM(view)
 	updateHeader(view)
 	updateMessages(view)
+	updateDiagramm(view)
 
 }
 func updaterScreen(view rui.View, session rui.Session) {

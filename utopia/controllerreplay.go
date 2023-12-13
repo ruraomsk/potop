@@ -83,6 +83,9 @@ func (s *StatusAndDetections) fill() {
 	s.TLCbasic = hardware.GetDiagnosticUtopia()
 	s.TLCstatus = hardware.GetStatusUtopia()
 	s.plan = hardware.GetPlan()
+	if s.plan < 1 || s.plan > 24 {
+		s.plan = 0
+	}
 	for i := 0; i < len(s.sensors); i++ {
 		s.sensors[i].counts = 0xff
 		s.sensors[i].occupancy = 0xff

@@ -14,7 +14,8 @@ import (
 var HoldsCmd chan WriteHolds
 var CoilsCmd chan WriteCoils
 var SetWork chan int //команды управления 1 - перейти в режим управления Utopia 0- включить локальный план управления
-var StateHardware = StateHard{Connect: false, Utopia: true, LastOperation: time.Unix(0, 0), Status: make([]byte, 4),
+var StateHardware = StateHard{Connect: false, Utopia: false, Autonom: false,
+	LastOperation: time.Unix(0, 0), Status: make([]byte, 4),
 	TOOBs: make([]uint16, 32)}
 var client *modbus.ModbusClient
 var err error
@@ -93,14 +94,19 @@ func Start() {
 				StateHardware.setConnect(true)
 				nowCoils = make(map[uint16][]bool)
 				nowHolds = make(map[uint16][]uint16)
+				SetAutonom(false)
 				journal.SendMessage(1, "КДМ подключен")
 			}
 		case cmd := <-SetWork:
 			if cmd == 0 {
-				StateHardware.setUtopia(false)
+				if !GetAutonom() {
+					StateHardware.setUtopia(false)
+				}
 			}
 			if cmd == 1 {
-				StateHardware.setUtopia(true)
+				if !GetAutonom() {
+					StateHardware.setUtopia(true)
+				}
 			}
 		case <-tickerStatus.C:
 			if StateHardware.GetConnect() {

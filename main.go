@@ -13,6 +13,7 @@ import (
 	"github.com/anoshenko/rui"
 
 	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/diagramm"
 	"github.com/ruraomsk/potop/hardware"
 	"github.com/ruraomsk/potop/journal"
 	"github.com/ruraomsk/potop/radar"
@@ -53,6 +54,7 @@ func main() {
 	go journal.LoggerStart()
 	go utopia.Transport()
 	go hardware.Start()
+	go diagramm.DiagrammStart()
 
 	time.Sleep(time.Second)
 	if setup.Set.Utopia.Debug {

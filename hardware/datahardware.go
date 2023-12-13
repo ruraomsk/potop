@@ -85,11 +85,12 @@ func (s *StateHard) setConnect(set bool) {
 	defer mutex.Unlock()
 	s.Connect = set
 }
-func (s *StateHard) getUtopia() bool {
-	mutex.Lock()
-	defer mutex.Unlock()
-	return s.Utopia
-}
+
+//	func (s *StateHard) getUtopia() bool {
+//		mutex.Lock()
+//		defer mutex.Unlock()
+//		return s.Utopia
+//	}
 func (s *StateHard) setUtopia(set bool) {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -295,6 +296,8 @@ func CommandUtopia(cmd int, value int) {
 		//Перейти в автономный режим
 		if value == 0 {
 			SetAutonom(false)
+			wh := WriteHolds{Start: 175, Data: []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, uint16(setup.Set.Utopia.Tmin)}}
+			HoldsCmd <- wh
 		} else {
 			SetAutonom(true)
 		}

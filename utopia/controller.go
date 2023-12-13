@@ -88,7 +88,6 @@ func Controller() {
 	go controlUtopiaServer()
 	for {
 		ctrl.input = <-fromServer
-		live <- 0
 		if hardware.IsConnectedKDM() {
 			workMessage()
 		} else {
@@ -125,6 +124,7 @@ func workMessage() {
 		ctrl.sendLive()
 		return
 	}
+	live <- 0
 	switch ctrl.input[6] {
 	case 2:
 		// Message 2 – TLC and group control
