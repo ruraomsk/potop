@@ -296,8 +296,9 @@ func CommandUtopia(cmd int, value int) {
 		//Перейти в автономный режим
 		if value == 0 {
 			SetAutonom(false)
-			wh := WriteHolds{Start: 175, Data: []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, uint16(setup.Set.Utopia.Tmin)}}
-			HoldsCmd <- wh
+			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
+			HoldsCmd <- WriteHolds{Start: 175, Data: []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, uint16(setup.Set.Utopia.Tmin)}}
+			HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{0}}
 		} else {
 			SetAutonom(true)
 		}

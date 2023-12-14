@@ -7,7 +7,7 @@ device = "/dev/com0"
 baudrate = 38400
 lostControl = 5      #Время потеря контроля Utopia
 recode = true
-tmin = 6             #Минимальное время фазы
+tmin = 1             #Минимальное время фазы
 replay = true        #Если истина то отвечаем Утоппи если нет связи с КДМ   
 
 [modbus]
