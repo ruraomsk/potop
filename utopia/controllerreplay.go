@@ -208,8 +208,61 @@ func (e *ExtendedDiagnostic) fill() {
 	e.lastop = time.Now()
 	e.Extrrors = make([]ExtError, 0)
 	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 0, 0}})
-	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 0, 0}})
 	e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 3, 1}})
+	hs := hardware.GetStateHard()
+	if hs.AllRed {
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{12, 0, 0}})
+	}
+	switch hs.Status[0] {
+	case 0:
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{0, 0, 0}})
+	case 1:
+		// return fmt.Sprintf("Лампа сгорела, контроль красных плата %d ключ %d",
+		// 	StateHardware.Status[1], StateHardware.Status[2])
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{6, 3, byte((hs.Status[1] << 4) | hs.Status[2])}})
+	case 2:
+		// return fmt.Sprintf("Лампа сгорела, контроль зеленых плата %d ключ %d",
+		// 	StateHardware.Status[1], StateHardware.Status[2])
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{6, 1, byte((hs.Status[1] << 4) | hs.Status[2])}})
+
+	case 3:
+		// return "Нет ответа от микросхемы аппаратных часов"
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{15, 0, 0}})
+	case 4:
+		// return "Нет сигнала от GPS приемника"
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{15, 0, 0}})
+	case 5:
+		// return fmt.Sprintf("Нет ответа от платы силовых ключей плата %d",
+		// 	StateHardware.Status[1])
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{11, 1, hs.Status[1]}})
+
+	case 6:
+		// return fmt.Sprintf("Нет ответа от платы ввода-вывода плата %d",
+		// 	StateHardware.Status[1])
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{11, 1, hs.Status[1]}})
+	case 7:
+		// return fmt.Sprintf("КЗ цепи кнопки КВП %d",
+		// 	StateHardware.Status[1])
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{11, 1, hs.Status[1]}})
+	case 8:
+		// return "версия файла конфигурации в ПЗУ не соответствует требуемой"
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{14, 1, 1}})
+	case 9:
+		// return "контрольная сумма файла конфигурации в ПЗУ показывает ошибку"
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{14, 1, 2}})
+	case 10:
+		// return fmt.Sprintf("обнаружен конфликт направлений %d",
+		// 	StateHardware.Status[1])
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{2, hs.Status[1], hs.Status[2]}})
+
+	case 11:
+		// return fmt.Sprintf("команда от сети обнаружен конфликт направлений %d",
+		// 	StateHardware.Status[1])
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{2, hs.Status[1], hs.Status[2]}})
+	case 12:
+		// return "не вхождение в координацию"
+		e.Extrrors = append(e.Extrrors, ExtError{code: [3]byte{15, 0, 0}})
+	}
 }
 
 func (e *ExtendedDiagnostic) toData() []byte {

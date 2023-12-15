@@ -13,6 +13,8 @@ import (
 
 var HoldsCmd chan WriteHolds
 var CoilsCmd chan WriteCoils
+var HoldsGet chan ReadHoldsReq
+var HoldsSend chan ReadHoldsResp
 var SetWork chan int //команды управления 1 - перейти в режим управления Utopia 0- включить локальный план управления
 var StateHardware = StateHard{Connect: false, Utopia: false, Autonom: false,
 	LastOperation: time.Unix(0, 0), Status: make([]byte, 4),
@@ -22,6 +24,7 @@ var err error
 var mutex sync.Mutex
 var nowCoils map[uint16][]bool
 var nowHolds map[uint16][]uint16
+var firstCommand bool
 
 func Start() {
 	StateHardware.setConnect(false)
@@ -30,6 +33,8 @@ func Start() {
 	nowHolds = make(map[uint16][]uint16)
 	HoldsCmd = make(chan WriteHolds)
 	CoilsCmd = make(chan WriteCoils)
+	HoldsGet = make(chan ReadHoldsReq)
+	HoldsSend = make(chan ReadHoldsResp)
 	SetWork = make(chan int)
 	tickerConnect := time.NewTicker(5 * time.Second)
 	tickerStatus := time.NewTicker(500 * time.Millisecond)
@@ -95,6 +100,7 @@ func Start() {
 				nowCoils = make(map[uint16][]bool)
 				nowHolds = make(map[uint16][]uint16)
 				SetAutonom(false)
+				firstCommand = true
 				journal.SendMessage(1, "КДМ подключен")
 			}
 		case cmd := <-SetWork:
@@ -105,9 +111,13 @@ func Start() {
 			}
 			if cmd == 1 {
 				if !GetAutonom() {
+					firstCommand = true
 					StateHardware.setUtopia(true)
 				}
 			}
+		case req := <-HoldsGet:
+			data, err := client.ReadRegisters(req.Start, req.Lenght, modbus.HOLDING_REGISTER)
+			HoldsSend <- ReadHoldsResp{Start: req.Start, Code: err, Data: data}
 		case <-tickerStatus.C:
 			if StateHardware.GetConnect() {
 				err = readStatus(!GetAutonom())
@@ -121,89 +131,47 @@ func Start() {
 			}
 		case wc := <-CoilsCmd:
 			StateHardware.setLastOperation()
+			if setup.Set.Modbus.Log {
+				logger.Debug.Printf("write coils addr=%d %v", wc.Start, wc.Data)
+			}
 			if StateHardware.GetConnect() {
-				if needCoils(wc) {
-					// logger.Debug.Printf("coils cmd %v", wc)
-					err = client.WriteCoils(wc.Start, wc.Data)
-					if err != nil {
-						logger.Error.Print(err.Error())
-						client.Close()
-						StateHardware.setConnect(false)
-					} else {
-						if setup.Set.Modbus.Log {
-							logger.Debug.Printf("write coils addr=%d %v", wc.Start, wc.Data)
-						}
-					}
+				// logger.Debug.Printf("coils cmd %v", wc)
+				err = client.WriteCoils(wc.Start, wc.Data)
+				if err != nil {
+					logger.Error.Print(err.Error())
+					client.Close()
+					StateHardware.setConnect(false)
 				}
 			}
 		case wh := <-HoldsCmd:
 			StateHardware.setLastOperation()
+			if setup.Set.Modbus.Log {
+				logger.Debug.Printf("write holds addr=%d % 02X", wh.Start, wh.Data)
+			}
 			if StateHardware.GetConnect() {
-				if needHolds(wh) {
-					// logger.Debug.Printf("holds cmd %v", wh)
-					err = client.WriteRegisters(wh.Start, wh.Data)
-					if err != nil {
-						logger.Error.Print(err.Error())
-						client.Close()
-						StateHardware.setConnect(false)
-					} else {
-						if setup.Set.Modbus.Log {
-							logger.Debug.Printf("write holds addr=%d % 02X", wh.Start, wh.Data)
-						}
-					}
+				// logger.Debug.Printf("holds cmd %v", wh)
+				err = client.WriteRegisters(wh.Start, wh.Data)
+				if err != nil {
+					logger.Error.Print(err.Error())
+					client.Close()
+					StateHardware.setConnect(false)
 				}
 			}
 		}
 	}
-}
-func needCoils(wc WriteCoils) bool {
-	w, is := nowCoils[wc.Start]
-	if !is {
-		nowCoils[wc.Start] = wc.Data
-		return true
-	}
-	if len(w) != len(wc.Data) {
-		nowCoils[wc.Start] = wc.Data
-		return true
-	}
-	for i := 0; i < len(w); i++ {
-		if w[i] != wc.Data[i] {
-			nowCoils[wc.Start] = wc.Data
-			return true
-		}
-	}
-	return false
-}
-func needHolds(wh WriteHolds) bool {
-	w, is := nowHolds[wh.Start]
-	if !is {
-		nowHolds[wh.Start] = wh.Data
-		return true
-	}
-	if len(w) != len(wh.Data) {
-		nowHolds[wh.Start] = wh.Data
-		return true
-	}
-	for i := 0; i < len(w); i++ {
-		if w[i] != wh.Data[i] {
-			nowHolds[wh.Start] = wh.Data
-			return true
-		}
-	}
-	return false
 }
 
 func readStatus(utopia bool) error {
 	mutex.Lock()
 	defer mutex.Unlock()
-	if !utopia {
-		//utopia отключена
-		StateHardware.WatchDog = 0
-		err := client.WriteRegister(178, StateHardware.WatchDog)
-		if err != nil {
-			return fmt.Errorf("write holds 178 %s", err.Error())
-		}
-	}
+	// if !utopia {
+	// 	//utopia отключена
+	// 	StateHardware.WatchDog = 0
+	// 	err := client.WriteRegister(178, StateHardware.WatchDog)
+	// 	if err != nil {
+	// 		return fmt.Errorf("write holds 178 %s", err.Error())
+	// 	}
+	// }
 	utopiacmd, err := client.ReadRegisters(175, 4, modbus.HOLDING_REGISTER)
 	if err != nil {
 		return fmt.Errorf("read holds 175 4 %s", err.Error())
@@ -228,6 +196,8 @@ func readStatus(utopia bool) error {
 	for i, v := range data {
 		StateHardware.StatusDirs[i] = uint8(v)
 	}
+	// logger.Debug.Printf("dirs %v", StateHardware.StatusDirs)
+
 	//Обновляем статус КДМ в его кодах
 	status, err := client.ReadRegisters(0, 4, modbus.HOLDING_REGISTER)
 	if err != nil {

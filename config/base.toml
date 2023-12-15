@@ -7,7 +7,7 @@ device = "/dev/com0"
 baudrate = 38400
 lostControl = 5      #Время потеря контроля Utopia
 recode = true
-tmin = 1             #Минимальное время фазы
+tmin = 5             #Минимальное время фазы
 replay = true        #Если истина то отвечаем Утоппи если нет связи с КДМ   
 
 [modbus]
@@ -21,8 +21,8 @@ debug = false
 log = false
 
 [trafficdata]
-work = true
-debug = true       #Запускать иммитатор
+work = false
+debug = false      #Запускать иммитатор
 host = "127.0.0.1"
 port = 1666
 listen = 1667
@@ -31,13 +31,13 @@ diaps = 1
 diap = 0
 
 [modbusradar]
-radar = false #если истинно нужно открывать прием сигналов радара
+radar = true            #если истинно нужно открывать прием сигналов радара
 master = true
-debug = true
-# host = "178.176.55.215"
-host = "127.0.0.1"
-port = 15001
+debug = false
+host = "10.135.123.150"
+# host = "127.0.0.1"
+port = 15000
 id = 11
-chanels = 16
+chanels = 8
 diaps = 1
 diap = 0

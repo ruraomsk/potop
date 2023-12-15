@@ -133,6 +133,10 @@ ListLayout {
 							row = 7, column = 2,
 							id=idPhase,type=editor,min=0,max=32,value=0
 						},
+						Button {
+							row = 8, column = 0:2,
+							id=setViewDiagramm,content="Показать диаграмму"
+						},
 
 					]
 				},
@@ -149,6 +153,8 @@ ListLayout {
 	]
 }
 `
+
+var viewDiagramm = false
 
 func PlanToString(plan int) string {
 	if plan == 0 {
@@ -189,32 +195,38 @@ func PhaseToString(phase int) string {
 }
 func updateDiagramm(view rui.View) {
 	var content [][]any
-
-	ms, times := diagramm.GetDiagramm(time.Now().Add(-80*time.Second), time.Now())
 	h := make([]any, 0)
 	h = append(h, "Канал")
-	for _, v := range times {
-		h = append(h, v.Second())
-	}
-	for i := 0; i < 80-len(times); i++ {
-		h = append(h, "  ")
+	var ms []diagramm.ViewDiag
+	var times []time.Time
+	if viewDiagramm {
+		ms, times = diagramm.GetDiagramm(time.Now().Add(-80*time.Second), time.Now())
+		for _, v := range times {
+			h = append(h, v.Second())
+		}
+		for i := 0; i < 80-len(times); i++ {
+			h = append(h, "  ")
+		}
 	}
 
 	content = append(content, h)
 	count := 1
-	for _, v := range ms {
-		if v.View {
-			r := make([]any, 0)
-			r = append(r, v.Chanel)
-			for _, k := range v.Data {
-				r = append(r, k)
+	if viewDiagramm {
+		for _, v := range ms {
+			if v.View {
+				r := make([]any, 0)
+				r = append(r, v.Chanel)
+				for _, k := range v.Data {
+					r = append(r, k)
+				}
+				for i := 0; i < 80-len(r); i++ {
+					r = append(r, "__")
+				}
+				content = append(content, r)
+				count++
 			}
-			for i := 0; i < 80-len(r); i++ {
-				r = append(r, "__")
-			}
-			content = append(content, r)
-			count++
 		}
+
 	}
 	rui.SetParams(view, "idDiagramm", rui.Params{
 		rui.Content:             content,
@@ -270,6 +282,15 @@ func makeButtonOnScreen(view rui.View) {
 		hardware.CommandUtopia(8, getInteger(rui.Get(view, "idPhase", "value")))
 		logger.Info.Printf("Оператор вызвал фазу %d", getInteger(rui.Get(view, "idPhase", "value")))
 	})
+	rui.Set(view, "setViewDiagramm", rui.ClickEvent, func(rui.View) {
+		if viewDiagramm {
+			viewDiagramm = false
+			rui.Set(view, "setViewDiagramm", "content", "Показать диаграмму")
+		} else {
+			viewDiagramm = true
+			rui.Set(view, "setViewDiagramm", "content", "Скрыть диаграмму")
+		}
+	})
 
 }
 func updatePartKDM(view rui.View) {
@@ -294,7 +315,8 @@ func updatePartKDM(view rui.View) {
 	if hs.SourceTOOB {
 		source = "внешний"
 	}
-	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Последняя команда в</b> %s <b>Тмин=%d Маска=%x остаток watchdog=%d</b>", toString(hs.LastOperation), hs.Tmin, hs.MaskCommand, hs.RealWatchDog))
+	rui.Set(view, "idLine1", "text", fmt.Sprintf("<b>Последняя команда в</b> %s <b>Тмин=%d Маска=%x остаток watchdog=%d</b>",
+		toString(hs.LastOperation), hs.Tmin, hs.MaskCommand, hs.RealWatchDog))
 	rui.Set(view, "idLine2", "text", fmt.Sprintf("<b>WatchDog</b> %d <b>План</b> %s <b>Фаза</b> %s <b>Статус КДМ</b> % 02X <b>Источник ТООВ</b> %s",
 		hs.WatchDog, PlanToString(hs.Plan), PhaseToString(hs.Phase), hs.Status, source))
 	rui.Set(view, "idLine3", "text", fmt.Sprintf("<b>Расшифровка статуса : %s </b>", hardware.GetError()))
@@ -302,7 +324,7 @@ func updatePartKDM(view rui.View) {
 	if hs.SourceTOOB {
 		content = append(content, []any{"Нап", "Задание", "Состояние", "Счетчик ТООВ"})
 	} else {
-		content = append(content, []any{"Нап", "Состояние", "Счетчик ТООВ"})
+		content = append(content, []any{"Нап", "Состояние"})
 	}
 	count := 1
 	s := hs.MaskCommand
@@ -347,7 +369,7 @@ func updatePartKDM(view rui.View) {
 		if hs.SourceTOOB {
 			content = append(content, []any{i, st, ds, hs.TOOBs[i]})
 		} else {
-			content = append(content, []any{i, ds, hs.TOOBs[i]})
+			content = append(content, []any{i, ds})
 		}
 		count++
 	}
@@ -400,7 +422,6 @@ func makeMainScreen(view rui.View) {
 	updateHeader(view)
 	updateMessages(view)
 	updateDiagramm(view)
-
 }
 func updaterScreen(view rui.View, session rui.Session) {
 	ticker := time.NewTicker(time.Second)

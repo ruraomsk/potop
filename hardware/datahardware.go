@@ -15,6 +15,15 @@ type WriteCoils struct {
 	Start uint16
 	Data  []bool
 }
+type ReadHoldsReq struct {
+	Start  uint16
+	Lenght uint16
+}
+type ReadHoldsResp struct {
+	Start uint16
+	Code  error
+	Data  []uint16
+}
 
 type StateHard struct {
 	Utopia        bool //true управляение утопией false - локальное управление
@@ -67,6 +76,7 @@ type StateHard struct {
 	MaskCommand  uint32   //Последняя маска
 	RealWatchDog uint16   //Остаток watchdog
 	TOOBs        []uint16 //Счетчики по направлениям
+	MyStatus     int      //Статус в переданной команде центра
 }
 
 func (s *StateHard) GetConnect() bool {
@@ -133,6 +143,7 @@ func SetTLC(watchdog int, sgc [64]bool) {
 	if !StateHardware.Connect {
 		return
 	}
+
 	StateHardware.WatchDog = uint16(watchdog)
 	wh := WriteHolds{Start: 175, Data: make([]uint16, 4)}
 	m := uint32(0)
@@ -148,17 +159,21 @@ func SetTLC(watchdog int, sgc [64]bool) {
 
 	wh.Data[1] = uint16(m >> 16 & 0xffff)
 	wh.Data[2] = uint16(m & 0xffff)
-	wh.Data[0] = uint16(setup.Set.Utopia.Tmin)
-	if m == 0 {
-		wh.Data[0] = 0
-	}
+	// wh.Data[0] = uint16(setup.Set.Utopia.Tmin)
+	wh.Data[0] = 0
 	wh.Data[3] = uint16(watchdog)
 	// logger.Debug.Printf("%x %v", m, sgc)
 	if StateHardware.Dark || StateHardware.Flashing || StateHardware.AllRed {
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 	}
-
-	HoldsCmd <- wh
+	if m == 0 {
+		if firstCommand {
+			firstCommand = false
+			HoldsCmd <- wh
+		}
+	} else {
+		HoldsCmd <- wh
+	}
 }
 func GetPlan() int {
 	mutex.Lock()
@@ -239,13 +254,7 @@ func GetStatusUtopia() byte {
 	if StateHardware.AllRed {
 		return 4
 	}
-	if StateHardware.WatchDog == 0 {
-		return 1
-	}
-	if StateHardware.WatchDog != 0 {
-		return 2
-	}
-	return 5
+	return byte(StateHardware.MyStatus)
 }
 func GetDiagnosticUtopia() byte {
 	mutex.Lock()
@@ -297,8 +306,9 @@ func CommandUtopia(cmd int, value int) {
 		if value == 0 {
 			SetAutonom(false)
 			CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
-			HoldsCmd <- WriteHolds{Start: 175, Data: []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, uint16(setup.Set.Utopia.Tmin)}}
-			HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{0}}
+			HoldsCmd <- WriteHolds{Start: 179, Data: []uint16{0, 0}}
+			HoldsCmd <- WriteHolds{Start: 175, Data: []uint16{0, 0, 0, uint16(setup.Set.Utopia.Tmin)}}
+			firstCommand = true
 		} else {
 			SetAutonom(true)
 		}
@@ -306,9 +316,7 @@ func CommandUtopia(cmd int, value int) {
 	case 1:
 		//Переход в локальный режим
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
-		StateHardware.WatchDog = uint16(0)
-		wh := WriteHolds{Start: 175, Data: make([]uint16, 4)}
-		HoldsCmd <- wh
+		HoldsCmd <- WriteHolds{Start: 179, Data: []uint16{0, 0}}
 	case 3:
 		//Переход в  режим ЖМ
 		if !StateHardware.Flashing {
@@ -331,7 +339,7 @@ func CommandUtopia(cmd int, value int) {
 		}
 		if StateHardware.WatchDog != 0 {
 			StateHardware.WatchDog = 0
-			HoldsCmd <- WriteHolds{Start: 178, Data: []uint16{0}}
+			HoldsCmd <- WriteHolds{Start: 175, Data: []uint16{0, 0, 0, 0}}
 		}
 		HoldsCmd <- WriteHolds{Start: 180, Data: []uint16{uint16(value)}}
 	case 8:
@@ -341,7 +349,7 @@ func CommandUtopia(cmd int, value int) {
 		}
 		if StateHardware.WatchDog != 0 {
 			StateHardware.WatchDog = 0
-			HoldsCmd <- WriteHolds{Start: 178, Data: []uint16{0}}
+			HoldsCmd <- WriteHolds{Start: 175, Data: []uint16{0, 0, 0, 0}}
 		}
 		HoldsCmd <- WriteHolds{Start: 179, Data: []uint16{uint16(value)}}
 	}
@@ -402,4 +410,9 @@ func GetAutonom() bool {
 	mutex.Lock()
 	defer mutex.Unlock()
 	return StateHardware.Autonom
+}
+func SetRemoteStatus(status int) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	StateHardware.MyStatus = status
 }

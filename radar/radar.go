@@ -58,7 +58,7 @@ func Radar(diap int) {
 		eh.lock.Lock()
 		eh.unpack()
 		var send []stat.OneTick
-		if time.Now().Sub(eh.uptime).Seconds() > 2 {
+		if time.Since(eh.uptime).Seconds() > 5 {
 			send = badStatistics()
 		} else {
 			send = goodStatistics()
@@ -82,7 +82,7 @@ func goodStatistics() []stat.OneTick {
 	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.ModbusRadar.Chanels; i++ {
-		r = append(r, stat.OneTick{Number: i, Time: t, Value: 255, Type: 0, Diap: diapazon})
+		r = append(r, stat.OneTick{Number: i, Time: t, Value: int(eh.dates[i]), Type: 0, Diap: diapazon})
 	}
 	return r
 }
@@ -119,7 +119,7 @@ func modbusMaster() {
 
 	client, err = modbus.NewClient(&modbus.ClientConfiguration{
 		URL:     fmt.Sprintf("tcp://%s:%d", setup.Set.ModbusRadar.Host, setup.Set.ModbusRadar.Port),
-		Timeout: 1 * time.Second,
+		Timeout: 5 * time.Second,
 	})
 
 	if err != nil {
@@ -132,6 +132,7 @@ func modbusMaster() {
 		for {
 			err = client.Open()
 			if err != nil {
+				work = false
 				if count%100 == 0 {
 					logger.Error.Println(err.Error())
 					count++
