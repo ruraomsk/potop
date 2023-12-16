@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"sync"
 
@@ -53,54 +52,54 @@ type NowSession struct {
 
 func (d *NowSession) OnStart(session rui.Session) {
 	SessionStatus[session.ID()] = true
-	rui.DebugLog(fmt.Sprintf("Session start %d", session.ID()))
+	// rui.DebugLog(fmt.Sprintf("Session start %d", session.ID()))
 }
 
 func (d *NowSession) OnFinish(session rui.Session) {
-	rui.DebugLog(fmt.Sprintf("Session finish %d", session.ID()))
+	// rui.DebugLog(fmt.Sprintf("Session finish %d", session.ID()))
 	_, ok := SessionStatus[session.ID()]
 	if !ok {
-		rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
+		// rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
 		return
 	}
 	SessionStatus[session.ID()] = false
 }
 
 func (d *NowSession) OnResume(session rui.Session) {
-	rui.DebugLog(fmt.Sprintf("Session resume %d", session.ID()))
+	// rui.DebugLog(fmt.Sprintf("Session resume %d", session.ID()))
 	_, ok := SessionStatus[session.ID()]
 	if !ok {
-		rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
+		// rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
 		return
 	}
 	SessionStatus[session.ID()] = true
 }
 
 func (d *NowSession) OnPause(session rui.Session) {
-	rui.DebugLog(fmt.Sprintf("Session pause %d", session.ID()))
+	// rui.DebugLog(fmt.Sprintf("Session pause %d", session.ID()))
 	_, ok := SessionStatus[session.ID()]
 	if !ok {
-		rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
+		// rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
 		return
 	}
 	SessionStatus[session.ID()] = false
 }
 
 func (d *NowSession) OnDisconnect(session rui.Session) {
-	rui.DebugLog(fmt.Sprintf("Session disconect %d", session.ID()))
+	// rui.DebugLog(fmt.Sprintf("Session disconect %d", session.ID()))
 	_, ok := SessionStatus[session.ID()]
 	if !ok {
-		rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
+		// rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
 		return
 	}
 	SessionStatus[session.ID()] = false
 }
 
 func (d *NowSession) OnReconnect(session rui.Session) {
-	rui.DebugLog(fmt.Sprintf("Session reconect %d", session.ID()))
+	// rui.DebugLog(fmt.Sprintf("Session reconect %d", session.ID()))
 	_, ok := SessionStatus[session.ID()]
 	if !ok {
-		rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
+		// rui.DebugLog(fmt.Sprintf("Session not started %v", SessionStatus))
 		return
 	}
 	SessionStatus[session.ID()] = true
@@ -112,8 +111,7 @@ func CreateSession(_ rui.Session) rui.SessionContent {
 		{"Главный экран", mainScreen, nil},
 		{"Текущее состояние", statusShow, nil},
 		{"Utopia", statusUtopia, nil},
-		// {"Состояние КДМ", statusKDM, nil},
-		// {"Ручное управление КДМ", controlKDM, nil},
+		{"Привязки КДМ", statusKDM, nil},
 		{"TrafficData", trafficShow, nil},
 		{"Настройки", setupShow, nil},
 	}
@@ -160,8 +158,6 @@ func (d *NowSession) clickMenuButton() {
 }
 
 func (d *NowSession) showPage(index int) {
-	// mutex.Lock()
-	// defer mutex.Unlock()
 
 	if index < 0 || index >= len(d.pages) {
 		return
@@ -170,12 +166,15 @@ func (d *NowSession) showPage(index int) {
 	if stackLayout := rui.StackLayoutByID(d.rootView, "rootViews"); stackLayout != nil {
 		if d.pages[index].view == nil {
 			d.pages[index].view = d.pages[index].creator(d.rootView.Session())
+			mutex.Lock()
 			stackLayout.Append(d.pages[index].view)
+			mutex.Unlock()
 		} else {
+			mutex.Lock()
 			stackLayout.MoveToFront(d.pages[index].view)
+			mutex.Unlock()
 		}
 		rui.Set(d.rootView, "rootTitleText", rui.Text, d.pages[index].title)
-		// d.rootView.Session().SetTitle(d.pages[index].title)
 	}
 }
 func Web() {

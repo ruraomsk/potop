@@ -22,15 +22,11 @@ var StateHardware = StateHard{Connect: false, Utopia: false, Autonom: false,
 var client *modbus.ModbusClient
 var err error
 var mutex sync.Mutex
-var nowCoils map[uint16][]bool
-var nowHolds map[uint16][]uint16
 var firstCommand bool
 
 func Start() {
 	StateHardware.setConnect(false)
 	count := 0
-	nowCoils = make(map[uint16][]bool)
-	nowHolds = make(map[uint16][]uint16)
 	HoldsCmd = make(chan WriteHolds)
 	CoilsCmd = make(chan WriteCoils)
 	HoldsGet = make(chan ReadHoldsReq)
@@ -38,6 +34,7 @@ func Start() {
 	SetWork = make(chan int)
 	tickerConnect := time.NewTicker(5 * time.Second)
 	tickerStatus := time.NewTicker(500 * time.Millisecond)
+	go configure()
 	// cycle:
 	for {
 		select {
@@ -97,8 +94,6 @@ func Start() {
 				count = 0
 				time.Sleep(time.Duration(setup.Set.Utopia.Tmin) * time.Second)
 				StateHardware.setConnect(true)
-				nowCoils = make(map[uint16][]bool)
-				nowHolds = make(map[uint16][]uint16)
 				SetAutonom(false)
 				firstCommand = true
 				journal.SendMessage(1, "КДМ подключен")
@@ -116,8 +111,12 @@ func Start() {
 				}
 			}
 		case req := <-HoldsGet:
-			data, err := client.ReadRegisters(req.Start, req.Lenght, modbus.HOLDING_REGISTER)
-			HoldsSend <- ReadHoldsResp{Start: req.Start, Code: err, Data: data}
+			if StateHardware.GetConnect() {
+				data, err := client.ReadRegisters(req.Start, req.Lenght, modbus.HOLDING_REGISTER)
+				HoldsSend <- ReadHoldsResp{Start: req.Start, Code: err, Data: data}
+			} else {
+				HoldsSend <- ReadHoldsResp{Start: req.Start, Code: fmt.Errorf("нет связи"), Data: []uint16{}}
+			}
 		case <-tickerStatus.C:
 			if StateHardware.GetConnect() {
 				err = readStatus(!GetAutonom())

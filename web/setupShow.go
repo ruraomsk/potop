@@ -147,7 +147,8 @@ func setupShow(session rui.Session) rui.View {
 	if view == nil {
 		return nil
 	}
-
+	mutex.Lock()
+	defer mutex.Unlock()
 	rui.Set(view, "idIPRadar", "text", setup.ExtSet.ModbusRadar.Host)
 	rui.Set(view, "idPortRadar", "value", setup.ExtSet.ModbusRadar.Port)
 	rui.Set(view, "idUidRadar", "value", setup.ExtSet.ModbusRadar.ID)

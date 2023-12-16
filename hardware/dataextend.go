@@ -1,5 +1,13 @@
 package hardware
 
+import (
+	"sync"
+	"time"
+
+	"github.com/ruraomsk/ag-server/logger"
+	"github.com/ruraomsk/potop/journal"
+)
+
 type Conflicts struct {
 	Conflicts map[int]LineConflict
 }
@@ -79,10 +87,15 @@ type Nplan struct {
 	Stop  int
 	Plan  int
 }
+
+var configMutex sync.Mutex
+
 type Config struct {
+	Ready      bool
 	Conflicts  Conflicts
 	DefineNaps DefineNaps
 	DefPhases  DefPhases
+	RPU        OnePlan
 	Plans      Plans
 	Year       Year
 	Weeks      Weeks
@@ -94,6 +107,11 @@ var config Config
 func (c *Conflicts) init() {
 	HoldsGet <- ReadHoldsReq{Start: 10198, Lenght: 62}
 	rep := <-HoldsSend
+	if rep.Code != nil {
+		logger.Error.Print(rep.Code.Error())
+		return
+	}
+	c.Conflicts = make(map[int]LineConflict)
 	for i := 0; i < 31; i++ {
 		l := LineConflict{Number: i, Line: make([]bool, 0)}
 		s := uint32(rep.Data[i*2])<<16 | uint32(rep.Data[i*2+1])
@@ -109,6 +127,7 @@ func (c *Conflicts) init() {
 	}
 }
 func (d *DefineNaps) init() {
+	d.DefineNaps = make(map[int]DefNap)
 	for j := 0; j < 31; j++ {
 		HoldsGet <- ReadHoldsReq{Start: uint16(10260 + (j * 10)), Lenght: 10}
 		rep := <-HoldsSend
@@ -127,6 +146,7 @@ func (d *DefineNaps) init() {
 	}
 }
 func (d *DefPhases) init() {
+	d.DefPhases = make(map[int]DefPhase)
 	for j := 0; j < 31; j++ {
 		HoldsGet <- ReadHoldsReq{Start: uint16(10580 + (j * 3)), Lenght: 3}
 		rep := <-HoldsSend
@@ -143,12 +163,27 @@ func (d *DefPhases) init() {
 		d.DefPhases[j] = l
 	}
 }
+func (p *OnePlan) init() {
+	HoldsGet <- ReadHoldsReq{Start: uint16(10676), Lenght: 99}
+	rep := <-HoldsSend
+	p.Number = 0
+	p.Type = int(rep.Data[0])
+	p.Tcycle = int(rep.Data[1])
+	p.Shift = int(rep.Data[2])
+	p.Lines = make([]Line, 0)
+	pos := 3
+	for i := 0; i < 24; i++ {
+		p.Lines = append(p.Lines, Line{Phase: int(rep.Data[pos]), Type: int(rep.Data[pos+1]), Start: int(rep.Data[pos+2]), Stop: int(rep.Data[pos+3])})
+		pos += 4
+	}
+}
 func (p *Plans) init() {
+	p.Plans = make(map[int]OnePlan)
 	for j := 0; j < 24; j++ {
 		HoldsGet <- ReadHoldsReq{Start: uint16(10775 + (j * 99)), Lenght: 99}
 		rep := <-HoldsSend
 		l := OnePlan{Number: j, Type: int(rep.Data[0]), Tcycle: int(rep.Data[1]), Shift: int(rep.Data[2]), Lines: make([]Line, 0)}
-		pos := 0
+		pos := 3
 		for i := 0; i < 24; i++ {
 			l.Lines = append(l.Lines, Line{Phase: int(rep.Data[pos]), Type: int(rep.Data[pos+1]), Start: int(rep.Data[pos+2]), Stop: int(rep.Data[pos+3])})
 			pos += 4
@@ -158,6 +193,7 @@ func (p *Plans) init() {
 
 }
 func (y *Year) init() {
+	y.Year = make(map[int]Month)
 	for j := 0; j < 12; j++ {
 		HoldsGet <- ReadHoldsReq{Start: uint16(13151 + (j * 31)), Lenght: 31}
 		rep := <-HoldsSend
@@ -169,6 +205,7 @@ func (y *Year) init() {
 	}
 }
 func (w *Weeks) init() {
+	w.Weeks = make(map[int]Week)
 	for j := 0; j < 12; j++ {
 		HoldsGet <- ReadHoldsReq{Start: uint16(13523 + (j * 7)), Lenght: 7}
 		rep := <-HoldsSend
@@ -180,6 +217,7 @@ func (w *Weeks) init() {
 	}
 }
 func (d *Days) init() {
+	d.Days = make(map[int]DayPlan)
 	for j := 0; j < 12; j++ {
 		HoldsGet <- ReadHoldsReq{Start: uint16(13607 + (j * 36)), Lenght: 36}
 		rep := <-HoldsSend
@@ -192,8 +230,14 @@ func (d *Days) init() {
 		d.Days[j] = l
 	}
 }
+func GetConfig() Config {
+	configMutex.Lock()
+	defer configMutex.Unlock()
+	return config
+}
 func getconfig() {
 	HoldsCmd <- WriteHolds{Start: 186, Data: []uint16{1}}
+	configMutex.Lock()
 	config.Conflicts.init()
 	config.DefineNaps.init()
 	config.DefPhases.init()
@@ -201,7 +245,26 @@ func getconfig() {
 	config.Year.init()
 	config.Weeks.init()
 	config.Days.init()
+	config.RPU.init()
+	configMutex.Unlock()
+	config.Ready = true
+	HoldsCmd <- WriteHolds{Start: 186, Data: []uint16{0}}
 }
 func configure() {
-
+	config = Config{Ready: false}
+	for {
+		if !StateHardware.GetConnect() {
+			configMutex.Lock()
+			config.Ready = false
+			configMutex.Unlock()
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		getconfig()
+		journal.SendMessage(1, "Привязки прочитаны")
+		for StateHardware.GetConnect() {
+			time.Sleep(10 * time.Second)
+			continue
+		}
+	}
 }
