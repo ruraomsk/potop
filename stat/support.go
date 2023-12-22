@@ -14,12 +14,24 @@ func GetCountValues() []int {
 		if !is {
 			continue
 		}
-		for _, v := range r.CountValues.Value {
-			ret = append(ret, v)
-		}
+		ret = append(ret, r.CountValues.Value...)
 	}
 	return ret
 }
+func GetOcupaeValues() []int {
+	Statistics.mutex.Lock()
+	defer Statistics.mutex.Unlock()
+	ret := make([]int, 0)
+	for i := 0; i < Statistics.counts; i++ {
+		r, is := Statistics.chanels[i]
+		if !is {
+			continue
+		}
+		ret = append(ret, r.OcupaeValues.Value...)
+	}
+	return ret
+}
+
 func GetSpeedValues() []int {
 	Statistics.mutex.Lock()
 	defer Statistics.mutex.Unlock()
@@ -29,9 +41,7 @@ func GetSpeedValues() []int {
 		if !is {
 			continue
 		}
-		for _, v := range r.SpeedValues.Value {
-			ret = append(ret, v)
-		}
+		ret = append(ret, r.SpeedValues.Value...)
 	}
 	return ret
 }

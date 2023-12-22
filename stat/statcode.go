@@ -29,9 +29,7 @@ func NoStatistics() {
 	InStat = make(chan OneTick, 100)
 	Statistics.clearAll(0, 0)
 	for {
-		select {
-		case t := <-InStat:
-			logger.Error.Printf("статистика отключена %v", t)
-		}
+		t := <-InStat
+		logger.Error.Printf("статистика отключена %v", t)
 	}
 }

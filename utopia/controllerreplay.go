@@ -92,11 +92,9 @@ func (s *StatusAndDetections) fill() {
 	}
 	for i, v := range stat.GetCountValues() {
 		s.sensors[i].counts = v
-		if v == 0 {
-			s.sensors[i].occupancy = 0
-		} else {
-			s.sensors[i].occupancy = 1
-		}
+	}
+	for i, v := range stat.GetOcupaeValues() {
+		s.sensors[i].occupancy = v
 	}
 	stat.ClearCountValues()
 	// logger.Debug.Printf("fill StatusAndDetections %v", s)

@@ -12,6 +12,7 @@ type OneTick struct {
 	Type   int       //Тип 0-счетчик 1-скорость
 	Diap   int       //Диапазон
 	Value  int
+	Ocupae int //Сколько стоит ТС на перекрестке
 }
 type Value struct {
 	Status int   //Качество 0 - хорошее 1 обрыв
@@ -43,11 +44,13 @@ type Value struct {
 
 }
 type OneChanel struct {
-	Number      int
-	CountValues Value
-	SpeedValues Value
-	LastCount   Value
-	LastSpeed   Value
+	Number       int
+	CountValues  Value
+	SpeedValues  Value
+	OcupaeValues Value
+	LastCount    Value
+	LastSpeed    Value
+	LastOcupae   Value
 }
 type Chanels struct {
 	mutex   sync.Mutex
@@ -84,8 +87,10 @@ func (v *Value) add(t OneTick) error {
 func (o *OneChanel) clearAll(diaps int) {
 	o.CountValues.clear(diaps)
 	o.SpeedValues.clear(diaps)
+	o.OcupaeValues.clear(diaps)
 	o.LastCount.clear(diaps)
 	o.LastSpeed.clear(diaps)
+	o.LastOcupae.clear(diaps)
 }
 func (c *Chanels) newSecond() {
 	c.mutex.Lock()
@@ -97,6 +102,7 @@ func (c *Chanels) newSecond() {
 		}
 		v.LastCount.clear(c.diaps)
 		v.LastSpeed.clear(c.diaps)
+		v.LastOcupae.clear(c.diaps)
 	}
 }
 func (c *Chanels) clearAll(chanels int, diaps int) {
@@ -120,6 +126,10 @@ func (c *Chanels) add(t OneTick) error {
 	return o.add(t)
 }
 func (o *OneChanel) add(t OneTick) error {
+	err := o.LastOcupae.add(t)
+	if err != nil {
+		return err
+	}
 	switch t.Type {
 	case 0: //Кол-во
 		err := o.LastCount.add(t)

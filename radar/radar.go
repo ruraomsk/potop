@@ -14,6 +14,9 @@ var eh *handler
 var work = false
 var diapazon = 0
 
+var occupancy []int
+var registers []int
+
 func GetValues() string {
 	if !work {
 		if setup.Set.ModbusRadar.Master {
@@ -37,6 +40,8 @@ func GetStatus() string {
 }
 func Radar(diap int) {
 	diapazon = diap
+	occupancy = make([]int, setup.Set.ModbusRadar.Chanels)
+	registers = make([]int, setup.Set.ModbusRadar.Chanels)
 	eh = &handler{uptime: time.Unix(0, 0)}
 	if setup.Set.ModbusRadar.Master {
 		if setup.Set.ModbusRadar.Debug {
@@ -82,7 +87,7 @@ func goodStatistics() []stat.OneTick {
 	r := make([]stat.OneTick, 0)
 	t := time.Now()
 	for i := 0; i < setup.Set.ModbusRadar.Chanels; i++ {
-		r = append(r, stat.OneTick{Number: i, Time: t, Value: int(eh.dates[i]), Type: 0, Diap: diapazon})
+		r = append(r, stat.OneTick{Number: i, Time: t, Value: int(eh.dates[i]), Ocupae: occupancy[i], Type: 0, Diap: diapazon})
 	}
 	return r
 }
@@ -144,7 +149,7 @@ func modbusMaster() {
 		}
 		logger.Info.Printf("connecting....%s:%d", setup.Set.ModbusRadar.Host, setup.Set.ModbusRadar.Port)
 		work = true
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(500 * time.Millisecond)
 		for {
 			<-ticker.C
 			reg16, err := client.ReadRegisters(0, uint16(len(eh.reg16)), modbus.HOLDING_REGISTER)
@@ -159,6 +164,24 @@ func modbusMaster() {
 			eh.lock.Lock()
 			for i := 0; i < len(eh.reg16); i++ {
 				eh.reg16[i] = reg16[i]
+			}
+			for i := 0; i < len(eh.reg16); i++ {
+				if eh.reg16[i] == 0 && registers[i] != 0 {
+					//Уехала машина
+					occupancy[i] -= registers[i]
+					if occupancy[i] < 0 {
+						occupancy[i] = 0
+					}
+					registers[i] = 0
+				}
+				if eh.reg16[i] != 0 && registers[i] == 0 {
+					//Приехала машина
+					occupancy[i] += registers[i]
+					if occupancy[i] > 100 {
+						occupancy[i] = 100
+					}
+					registers[i] = int(eh.reg16[i])
+				}
 			}
 			eh.uptime = time.Now()
 			eh.lock.Unlock()
