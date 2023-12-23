@@ -130,6 +130,10 @@ func (o *OneChanel) add(t OneTick) error {
 	if err != nil {
 		return err
 	}
+	err = o.OcupaeValues.add(t)
+	if err != nil {
+		return err
+	}
 	switch t.Type {
 	case 0: //Кол-во
 		err := o.LastCount.add(t)

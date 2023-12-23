@@ -11,7 +11,9 @@ import (
 	"github.com/ruraomsk/potop/journal"
 	"github.com/ruraomsk/potop/radar"
 	"github.com/ruraomsk/potop/setup"
+	"github.com/ruraomsk/potop/stcip"
 	"github.com/ruraomsk/potop/traffic"
+	"github.com/ruraomsk/potop/utopia"
 )
 
 const mainText = `
@@ -255,31 +257,43 @@ func updateMessages(view rui.View) {
 }
 func makeButtonOnScreen(view rui.View) {
 	rui.Set(view, "setAllRedOn", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(4, 0)
+		hardware.CommandToKDM(4, 1)
 		logger.Info.Printf("Оператор установил КК")
 	})
 	rui.Set(view, "setFlashingOn", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(3, 0)
+		hardware.CommandToKDM(3, 1)
 		logger.Info.Printf("Оператор установил ЖМ")
 	})
 	rui.Set(view, "setDarkOn", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(6, 0)
+		hardware.CommandToKDM(6, 1)
 		logger.Info.Printf("Оператор установил ОС")
 	})
 	rui.Set(view, "setAutoOn", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(0, 1)
+		hardware.CommandToKDM(0, 1)
+		if setup.Set.Utopia.Run {
+			utopia.SetAutonom(true)
+		}
+		if setup.Set.STCIP.Run {
+			stcip.SetAutonom(true)
+		}
 		logger.Info.Printf("Оператор перевел в Автоном")
 	})
 	rui.Set(view, "setAutoOff", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(0, 0)
+		hardware.CommandToKDM(0, 0)
+		if setup.Set.Utopia.Run {
+			utopia.SetAutonom(false)
+		}
+		if setup.Set.STCIP.Run {
+			stcip.SetAutonom(false)
+		}
 		logger.Info.Printf("Оператор отключил Автоном")
 	})
 	rui.Set(view, "setPlan", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(7, getInteger(rui.Get(view, "idPlan", "value")))
+		hardware.CommandToKDM(7, getInteger(rui.Get(view, "idPlan", "value")))
 		logger.Info.Printf("Оператор вызвал план %d", getInteger(rui.Get(view, "idPlan", "value")))
 	})
 	rui.Set(view, "setPhase", rui.ClickEvent, func(rui.View) {
-		hardware.CommandUtopia(8, getInteger(rui.Get(view, "idPhase", "value")))
+		hardware.CommandToKDM(8, getInteger(rui.Get(view, "idPhase", "value")))
 		logger.Info.Printf("Оператор вызвал фазу %d", getInteger(rui.Get(view, "idPhase", "value")))
 	})
 	rui.Set(view, "setViewDiagramm", rui.ClickEvent, func(rui.View) {
@@ -291,7 +305,6 @@ func makeButtonOnScreen(view rui.View) {
 			rui.Set(view, "setViewDiagramm", "content", "Скрыть диаграмму")
 		}
 	})
-
 }
 func updatePartKDM(view rui.View) {
 	hs := hardware.GetStateHard()
@@ -385,7 +398,7 @@ func updateHeader(view rui.View) {
 	t := time.Now()
 	rui.Set(view, "time", "text", fmt.Sprintf("<b>%d %02d:%02d:%02d</b>", setup.Set.Id,
 		t.Hour(), t.Minute(), t.Second()))
-	if hardware.StateHardware.GetConnectUtopia() {
+	if hardware.StateHardware.GetCentral() {
 		rui.Set(view, "isCentral", "background-color", "green")
 	} else {
 		rui.Set(view, "isCentral", "background-color", "gray")
@@ -395,7 +408,7 @@ func updateHeader(view rui.View) {
 	} else {
 		rui.Set(view, "isKDM", "background-color", "gray")
 	}
-	if setup.Set.ModbusRadar.Radar {
+	if setup.Set.ModbusRadar.Work {
 		if radar.GetWork() {
 			rui.Set(view, "isRadar", "background-color", "green")
 		} else {
@@ -409,10 +422,19 @@ func updateHeader(view rui.View) {
 			rui.Set(view, "isTrafficData", "background-color", "gray")
 		}
 	}
-	if hardware.GetAutonom() {
-		rui.Set(view, "isAutonom", "background-color", "green")
-	} else {
-		rui.Set(view, "isAutonom", "background-color", "gray")
+	if setup.Set.Utopia.Run {
+		if utopia.GetAutonom() {
+			rui.Set(view, "isAutonom", "background-color", "green")
+		} else {
+			rui.Set(view, "isAutonom", "background-color", "gray")
+		}
+	}
+	if setup.Set.STCIP.Run {
+		if stcip.GetAutonom() {
+			rui.Set(view, "isAutonom", "background-color", "green")
+		} else {
+			rui.Set(view, "isAutonom", "background-color", "gray")
+		}
 	}
 }
 func makeMainScreen(view rui.View) {

@@ -4,13 +4,25 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ruraomsk/potop/setup"
 	"github.com/ruraomsk/potop/utopia"
 
 	"github.com/anoshenko/rui"
 )
 
-//row=1,column=0,
-//width = 100%, height = 100%, cell-width = "150px, 1fr, 30%", cell-height = "25%, 200px, 1fr",
+// row=1,column=0,
+// width = 100%, height = 100%, cell-width = "150px, 1fr, 30%", cell-height = "25%, 200px, 1fr",
+const noUtopiaText = `
+ListLayout {
+	orientation = vertical, style = showPage,
+	content = [
+		TextView {
+			style=header1,
+			text = "Utopia отключена в текущей конфигурации"
+		},
+	]
+}	
+`
 
 const utopiaText = `
 ListLayout {
@@ -91,12 +103,15 @@ func updaterUtopia(view rui.View, session rui.Session) {
 }
 
 func statusUtopia(session rui.Session) rui.View {
-	view := rui.CreateViewFromText(session, utopiaText)
-	if view == nil {
-		return nil
+	if setup.Set.Utopia.Run {
+		view := rui.CreateViewFromText(session, utopiaText)
+		if view == nil {
+			return nil
+		}
+		makeViewUtopia(view)
+		go updaterUtopia(view, session)
+		return view
 	}
-	makeViewUtopia(view)
-	go updaterUtopia(view, session)
+	view := rui.CreateViewFromText(session, noUtopiaText)
 	return view
-
 }

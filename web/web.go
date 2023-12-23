@@ -111,6 +111,7 @@ func CreateSession(_ rui.Session) rui.SessionContent {
 		{"Главный экран", mainScreen, nil},
 		{"Текущее состояние", statusShow, nil},
 		{"Utopia", statusUtopia, nil},
+		{"STCIP", stcipScreen, nil},
 		{"Привязки КДМ", statusKDM, nil},
 		{"TrafficData", trafficShow, nil},
 		{"Настройки", setupShow, nil},

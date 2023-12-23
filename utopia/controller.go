@@ -54,7 +54,21 @@ func GetControllerUtopia() ControllerUtopia {
 	defer mutex.Unlock()
 	return ctrl
 }
-
+func GetAutonom() bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return ctrl.autonom
+}
+func SetAutonom(set bool) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	ctrl.autonom = set
+}
+func GetConnect() bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return ctrl.connect
+}
 func controlUtopiaServer() {
 	var timer *time.Timer
 	hardware.SetWork <- 0
@@ -66,18 +80,21 @@ func controlUtopiaServer() {
 		timer = time.NewTimer(getDuration())
 		logger.Info.Print("Есть управление от utopia")
 		journal.SendMessage(2, "Есть управление от utopia")
-		hardware.SetWork <- 1
+		ctrl.connect = true
 	loop:
 		for {
 			select {
 			case <-timer.C:
-				hardware.SetWork <- 0
-				break loop
+				if !ctrl.autonom {
+					hardware.SetWork <- 0
+					break loop
+				}
 			case <-live:
 				timer.Stop()
 				timer = time.NewTimer(getDuration())
 			}
 		}
+		ctrl.connect = false
 		logger.Error.Print("Потеряно управление от utopia")
 		journal.SendMessage(2, "Потеряно управление от utopia")
 	}
@@ -120,7 +137,7 @@ func workMessage() {
 		ctrl.sendLive()
 		return
 	}
-	if !hardware.IsConnectedKDM() || hardware.GetAutonom() {
+	if !hardware.IsConnectedKDM() || ctrl.autonom {
 		ctrl.sendLive()
 		return
 	}

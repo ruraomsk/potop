@@ -145,6 +145,16 @@ func modbusMaster() {
 				time.Sleep(5 * time.Second)
 				continue
 			}
+			_, err := client.ReadRegisters(0, uint16(len(eh.reg16)), modbus.HOLDING_REGISTER)
+			if err != nil {
+				work = false
+				if count%100 == 0 {
+					logger.Error.Println(err.Error())
+					count++
+				}
+				client.Close()
+				continue
+			}
 			break
 		}
 		logger.Info.Printf("connecting....%s:%d", setup.Set.ModbusRadar.Host, setup.Set.ModbusRadar.Port)

@@ -16,7 +16,7 @@ var CoilsCmd chan WriteCoils
 var HoldsGet chan ReadHoldsReq
 var HoldsSend chan ReadHoldsResp
 var SetWork chan int //команды управления 1 - перейти в режим управления Utopia 0- включить локальный план управления
-var StateHardware = StateHard{Connect: false, Utopia: false, Autonom: false,
+var StateHardware = StateHard{Connect: false,
 	LastOperation: time.Unix(0, 0), Status: make([]byte, 4),
 	TOOBs: make([]uint16, 32)}
 var client *modbus.ModbusClient
@@ -74,14 +74,14 @@ func Start() {
 						logger.Debug.Printf("write to 6 1")
 					}
 				}
-				//Готовим его к работе с Utopia
+				//Готовим его к работе
 				/*
 				   Останется один момент, как красиво перевести контроллер под управление утопии.
 				   Для этого нужно дать команду с нулевой маской "начало фазы" и ждать пока
 				   контроллер покажет в регистре 29 значение 35 или 36 – внешний вызов направлений.
 				   После этого лучше подождать пока пройдет время промтакта.
 				*/
-				err = client.WriteRegisters(175, []uint16{uint16(setup.Set.Utopia.Tmin), 0, 0, uint16(setup.Set.Utopia.Tmin)})
+				err = client.WriteRegisters(175, []uint16{uint16(setup.Set.Modbus.Tmin), 0, 0, uint16(setup.Set.Modbus.Tmin)})
 				if err != nil {
 					logger.Error.Print(err.Error())
 					client.Close()
@@ -92,23 +92,19 @@ func Start() {
 					}
 				}
 				count = 0
-				time.Sleep(time.Duration(setup.Set.Utopia.Tmin) * time.Second)
+				time.Sleep(time.Duration(setup.Set.Modbus.Tmin) * time.Second)
 				StateHardware.setConnect(true)
-				SetAutonom(false)
+				// SetAutonom(false)
 				firstCommand = true
 				journal.SendMessage(1, "КДМ подключен")
 			}
 		case cmd := <-SetWork:
 			if cmd == 0 {
-				if !GetAutonom() {
-					StateHardware.setUtopia(false)
-				}
+				StateHardware.setCenral(false)
 			}
 			if cmd == 1 {
-				if !GetAutonom() {
-					firstCommand = true
-					StateHardware.setUtopia(true)
-				}
+				firstCommand = true
+				StateHardware.setCenral(true)
 			}
 		case req := <-HoldsGet:
 			if StateHardware.GetConnect() {
@@ -119,7 +115,7 @@ func Start() {
 			}
 		case <-tickerStatus.C:
 			if StateHardware.GetConnect() {
-				err = readStatus(!GetAutonom())
+				err = readStatus()
 				if err != nil {
 					logger.Error.Print(err.Error())
 					journal.SendMessage(1, err.Error())
@@ -160,17 +156,9 @@ func Start() {
 	}
 }
 
-func readStatus(utopia bool) error {
+func readStatus() error {
 	mutex.Lock()
 	defer mutex.Unlock()
-	// if !utopia {
-	// 	//utopia отключена
-	// 	StateHardware.WatchDog = 0
-	// 	err := client.WriteRegister(178, StateHardware.WatchDog)
-	// 	if err != nil {
-	// 		return fmt.Errorf("write holds 178 %s", err.Error())
-	// 	}
-	// }
 	utopiacmd, err := client.ReadRegisters(175, 4, modbus.HOLDING_REGISTER)
 	if err != nil {
 		return fmt.Errorf("read holds 175 4 %s", err.Error())
@@ -179,14 +167,6 @@ func readStatus(utopia bool) error {
 	StateHardware.RealWatchDog = utopiacmd[3]
 	StateHardware.MaskCommand = uint32(utopiacmd[1])<<16 | uint32(utopiacmd[2])
 
-	// //Обновляем wtchdog если нужно
-	// if StateHardware.RealWatchDog > 0 {
-	// 	StateHardware.RealWatchDog--
-	// 	err := client.WriteRegister(178, StateHardware.RealWatchDog)
-	// 	if err != nil {
-	// 		return fmt.Errorf("write holds 178 %s", err.Error())
-	// 	}
-	// }
 	//Считываем состояние направлений
 	data, err := client.ReadRegisters(190, 32, modbus.HOLDING_REGISTER)
 	if err != nil {
@@ -195,7 +175,6 @@ func readStatus(utopia bool) error {
 	for i, v := range data {
 		StateHardware.StatusDirs[i] = uint8(v)
 	}
-	// logger.Debug.Printf("dirs %v", StateHardware.StatusDirs)
 
 	//Обновляем статус КДМ в его кодах
 	status, err := client.ReadRegisters(0, 4, modbus.HOLDING_REGISTER)

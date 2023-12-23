@@ -11,6 +11,8 @@ type ControllerUtopia struct {
 	output  []byte //Передано на сервер
 	data    []byte //Вычитанные чистые данные
 	status  int    //0 1 - Local 2  -central
+	autonom bool
+	connect bool
 	//Запросы сервера
 	TlcAndGroupControl  TlcAndGroupControl  // Spot TLC and group control (2)
 	CountDown           CountDown           // Spot Message 8  – Signal group count-down, управление сигнальными группами

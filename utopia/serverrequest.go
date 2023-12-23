@@ -32,12 +32,12 @@ func (t *TlcAndGroupControl) ToString() string {
 }
 func (t *TlcAndGroupControl) execute() {
 	// logger.Debug.Printf("execute TlcAndGroupControl %v", t)
-	hardware.SetRemoteStatus(t.command)
+	ctrl.status = t.command
 	if t.command == 2 || t.command == 1 {
 		hardware.SetTLC(t.watchdog, t.ctrlSG)
 		return
 	}
-	hardware.CommandUtopia(t.command, 0)
+	hardware.CommandToKDM(t.command, 1)
 }
 func (t *TlcAndGroupControl) toData() []byte {
 	t.lastop = time.Now()

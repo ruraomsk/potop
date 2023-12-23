@@ -80,8 +80,8 @@ func (s *StatusAndDetections) ToString() string {
 }
 
 func (s *StatusAndDetections) fill() {
-	s.TLCbasic = hardware.GetDiagnosticUtopia()
-	s.TLCstatus = hardware.GetStatusUtopia()
+	s.TLCbasic = GetDiagnosticUtopia()
+	s.TLCstatus = GetStatusUtopia()
 	s.plan = hardware.GetPlan()
 	if s.plan < 1 || s.plan > 24 {
 		s.plan = 0
@@ -151,7 +151,7 @@ func (s *SignalGroupFeedback) fill() {
 	for i := 0; i < len(s.states); i++ {
 		s.states[i] = 255
 	}
-	for i, v := range hardware.GetStatusDirs() {
+	for i, v := range GetStatusDirs() {
 		s.states[i] = int(v)
 	}
 	// logger.Debug.Printf("fill SignalGroupFeedback %v", s)

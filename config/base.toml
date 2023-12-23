@@ -1,14 +1,22 @@
 logpath = "log/"
 id = 104
+
 [utopia]
+run = true
 debug = false #если истина то запускать имитатор 
 # device = "rtu:///dev/com0"
 device = "/dev/com0"
 baudrate = 38400
 lostControl = 5      #Время потеря контроля Utopia
 recode = true
-tmin = 5             #Минимальное время фазы
 replay = true        #Если истина то отвечаем Утоппи если нет связи с КДМ   
+
+[stcip]
+run = false
+debug = true       #Запускать иммитатор
+host = "127.0.0.1"
+port = 1666
+listen = 1667
 
 [modbus]
 # device="rtu:///dev/ttyUSB0"
@@ -19,6 +27,7 @@ parity = "N"
 uid = 1
 debug = false
 log = false
+tmin = 5                   #Минимальное время фазы
 
 [trafficdata]
 work = false
@@ -31,12 +40,12 @@ diaps = 1
 diap = 0
 
 [modbusradar]
-radar = true            #если истинно нужно открывать прием сигналов радара
+work = true
 master = true
 debug = false
 host = "10.135.123.150"
 # host = "127.0.0.1"
-port = 15000
+port = 15001
 id = 11
 chanels = 8
 diaps = 1

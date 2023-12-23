@@ -9,7 +9,9 @@ import (
 	"github.com/ruraomsk/potop/hardware"
 	"github.com/ruraomsk/potop/radar"
 	"github.com/ruraomsk/potop/setup"
+	"github.com/ruraomsk/potop/stcip"
 	"github.com/ruraomsk/potop/traffic"
+	"github.com/ruraomsk/potop/utopia"
 )
 
 // border = _{ style = solid, width = 1px, color = darkgray },
@@ -25,6 +27,11 @@ const statusText = `
 				},
 				TextView {
 					id=idUtopia,
+					text = "",
+					text-size="24px",
+				},
+				TextView {
+					id=idSTCIP,
 					text = "",
 					text-size="24px",
 				},
@@ -56,18 +63,34 @@ func makeViewStatus(view rui.View) {
 	t := time.Now()
 	rui.Set(view, "titleStatus", "text", fmt.Sprintf("<b>Текущее состояние контроллера %d </b>%02d:%02d:%02d", setup.Set.Id,
 		t.Hour(), t.Minute(), t.Second()))
-
-	c := fmt.Sprintf("Соединение со СПОТ Utopia device %s baud %d \t",
-		setup.Set.Utopia.Device, setup.Set.Utopia.BaudRate)
-
-	if hardware.StateHardware.GetConnectUtopia() {
-		c += "установлено"
+	c := ""
+	if setup.Set.Utopia.Run {
+		c = fmt.Sprintf("Соединение со СПОТ Utopia device %s baud %d \t",
+			setup.Set.Utopia.Device, setup.Set.Utopia.BaudRate)
+		if utopia.GetConnect() {
+			c += "установлено"
+		} else {
+			c += "отсутствует"
+		}
 	} else {
-		c += "отсутствует"
+		c = "Utopia интерфейс отключен"
 	}
 	rui.Set(view, "idUtopia", "text", c)
+	if setup.Set.STCIP.Run {
+		c = fmt.Sprintf("Соединение со STCIP device %s port %d listen %d \t",
+			setup.Set.STCIP.Host, setup.Set.STCIP.Port, setup.Set.STCIP.Listen)
+		if stcip.GetConnect() {
+			c += "установлено"
+		} else {
+			c += "отсутствует"
+		}
+	} else {
+		c = "STCIP интерфейс отключен"
+	}
 
-	c = fmt.Sprintf("Соединение Modbus device %s baud %d parity %s uid %d \t",
+	rui.Set(view, "idSTCIP", "text", c)
+
+	c = fmt.Sprintf("Соединение с КДМ device %s baud %d parity %s uid %d \t",
 		setup.Set.Modbus.Device, setup.Set.Modbus.BaudRate, setup.Set.Modbus.Parity, setup.Set.Modbus.UId)
 	if hardware.StateHardware.GetConnect() {
 		c += "установлено"
@@ -75,7 +98,7 @@ func makeViewStatus(view rui.View) {
 		c += "отсутствует"
 	}
 	rui.Set(view, "idModbus", "text", c)
-	if !setup.Set.ModbusRadar.Radar {
+	if !setup.Set.ModbusRadar.Work {
 		rui.Set(view, "setModbusRadar", "text", "Оключен прием данных от радаров")
 	} else {
 		rui.Set(view, "setModbusRadar", "text", fmt.Sprintf("От радаров (%s): %s ", radar.GetStatus(), radar.GetValues()))

@@ -16,7 +16,7 @@ ListLayout {
 	content = [
 		TextView {
 			style=header1,
-			text = "TrafficData не используется в данной системе"
+			text = "TrafficData отключена в текущей конфигурации"
 		},
 	]
 }	

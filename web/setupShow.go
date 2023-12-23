@@ -33,6 +33,12 @@ const setupText = `
 						NumberPicker {
 							id=idUid,type=editor,min=0,max=255,value=247
 						},
+						TextView {
+							text = "Тмин ",text-size="24px",
+						},
+						NumberPicker {
+							id=idTmin,type=editor,min=1,max=60,value=5
+						},
 					]
 				},
 				TextView {
@@ -42,9 +48,11 @@ const setupText = `
 					orientation = horizontal, list-column-gap=16px,padding = 16px,
 					border = _{style=solid,width=4px,color=blue },
 					content = [
+						DropDownList { id =listUtopia, current = 0, items = ["Включен", "Отключен"]},
 						TextView {
 							text = "Устройство",text-size="24px",
 						},
+
 						EditView{
 							id=idUtopia,type=text
 						},
@@ -54,11 +62,33 @@ const setupText = `
 						NumberPicker {
 							id=idBaudrate,type=editor,min=0,max=115200,value=38400
 						},
+					]
+				},
+				TextView {
+					text = "<b>Изменение настроек связи со STCIP </b>",text-align="center",text-size="24px",
+				},
+				ListLayout {
+					orientation = horizontal, list-column-gap=16px,padding = 16px,
+					border = _{style=solid,width=4px,color=blue },
+					content = [
+						DropDownList { id =listSTCIP, current = 0, items = ["Включен", "Отключен"]},
 						TextView {
-							text = "Тмин ",text-size="24px",
+							text = "Устройство",text-size="24px",
+						},
+						EditView{
+							id=idSTCIP,type=text
+						},
+						TextView {
+							text = "Номер порта",text-size="24px",
 						},
 						NumberPicker {
-							id=idTmin,type=editor,min=1,max=60,value=5
+							id=idSTCIPPort,type=editor,min=0,max=32000,value=1666
+						},
+						TextView {
+							text = "Слушаем",text-size="24px",
+						},
+						NumberPicker {
+							id=idSTCIPListen,type=editor,min=0,max=32000,value=1667
 						},
 					]
 				},
@@ -154,19 +184,19 @@ func setupShow(session rui.Session) rui.View {
 	rui.Set(view, "idUidRadar", "value", setup.ExtSet.ModbusRadar.ID)
 	rui.Set(view, "idChanelsRadar", "value", setup.ExtSet.ModbusRadar.Chanels)
 	c := 0
-	if !setup.ExtSet.ModbusRadar.Radar {
+	if !setup.ExtSet.ModbusRadar.Work {
 		c = 1
 	}
 	rui.Set(view, "listRadar", "current", c)
 	rui.Set(view, "listRadar", rui.DropDownEvent, func(_ rui.DropDownList, number int) {
 		switch number {
 		case 0:
-			setup.ExtSet.ModbusRadar.Radar = true
+			setup.ExtSet.ModbusRadar.Work = true
 
 		case 1:
-			setup.ExtSet.ModbusRadar.Radar = false
+			setup.ExtSet.ModbusRadar.Work = false
 		}
-		if setup.ExtSet.TrafficData.Work && setup.ExtSet.ModbusRadar.Radar {
+		if setup.ExtSet.TrafficData.Work && setup.ExtSet.ModbusRadar.Work {
 			rui.Set(view, "idError", "text", "<b>Нельзя одновременно указывать радар и TrafficData</b>")
 		} else {
 			rui.Set(view, "idError", "text", "")
@@ -185,7 +215,7 @@ func setupShow(session rui.Session) rui.View {
 		case 1:
 			setup.ExtSet.TrafficData.Work = false
 		}
-		if setup.ExtSet.TrafficData.Work && setup.ExtSet.ModbusRadar.Radar {
+		if setup.ExtSet.TrafficData.Work && setup.ExtSet.ModbusRadar.Work {
 			rui.Set(view, "idError", "text", "<b>Нельзя одновременно указывать радар и TrafficData</b>")
 		} else {
 			rui.Set(view, "idError", "text", "")
@@ -199,9 +229,51 @@ func setupShow(session rui.Session) rui.View {
 
 	rui.Set(view, "idDevice", "text", setup.ExtSet.Modbus.Device)
 	rui.Set(view, "idUid", "value", setup.ExtSet.Modbus.UId)
+	rui.Set(view, "idTmin", "value", setup.ExtSet.Modbus.Tmin)
+	c = 0
+	if !setup.ExtSet.Utopia.Run {
+		c = 1
+	}
+	rui.Set(view, "listUtopia", "current", c)
+	rui.Set(view, "listUtopia", rui.DropDownEvent, func(_ rui.DropDownList, number int) {
+		switch number {
+		case 0:
+			setup.ExtSet.Utopia.Run = true
+
+		case 1:
+			setup.ExtSet.Utopia.Run = false
+		}
+		if setup.ExtSet.Utopia.Run && setup.ExtSet.STCIP.Run {
+			rui.Set(view, "idError", "text", "<b>Нельзя одновременно указывать Utopia и STCIP</b>")
+		} else {
+			rui.Set(view, "idError", "text", "")
+		}
+	})
 	rui.Set(view, "idUtopia", "text", setup.ExtSet.Utopia.Device)
 	rui.Set(view, "idBaudrate", "value", setup.ExtSet.Utopia.BaudRate)
-	rui.Set(view, "idTmin", "value", setup.ExtSet.Utopia.Tmin)
+
+	c = 0
+	if !setup.ExtSet.STCIP.Run {
+		c = 1
+	}
+	rui.Set(view, "listSTCIP", "current", c)
+	rui.Set(view, "listSTCIP", rui.DropDownEvent, func(_ rui.DropDownList, number int) {
+		switch number {
+		case 0:
+			setup.ExtSet.STCIP.Run = true
+
+		case 1:
+			setup.ExtSet.STCIP.Run = false
+		}
+		if setup.ExtSet.Utopia.Run && setup.ExtSet.STCIP.Run {
+			rui.Set(view, "idError", "text", "<b>Нельзя одновременно указывать Utopia и STCIP</b>")
+		} else {
+			rui.Set(view, "idError", "text", "")
+		}
+	})
+	rui.Set(view, "idSTCIP", "text", setup.ExtSet.STCIP.Host)
+	rui.Set(view, "idSTCIPPort", "value", setup.ExtSet.STCIP.Port)
+	rui.Set(view, "idSTCIPListen", "value", setup.ExtSet.STCIP.Listen)
 
 	rui.Set(view, "setUpdate", rui.ClickEvent, func(rui.View) {
 
@@ -223,11 +295,15 @@ func setupShow(session rui.Session) rui.View {
 
 		setup.ExtSet.Modbus.Device = rui.GetText(view, "idDevice")
 		setup.ExtSet.Modbus.UId = getInteger(rui.Get(view, "idUid", "value"))
-		logger.Info.Printf("Изменили КДМ на %s uid %d", setup.ExtSet.Modbus.Device, setup.ExtSet.Modbus.UId)
+		setup.ExtSet.Modbus.Tmin = getInteger(rui.Get(view, "idTmin", "value"))
+		logger.Info.Printf("Изменили КДМ на %s uid %d Tmin %d", setup.ExtSet.Modbus.Device, setup.ExtSet.Modbus.UId, setup.ExtSet.Modbus.Tmin)
 		setup.ExtSet.Utopia.Device = rui.GetText(view, "idUtopia")
 		setup.ExtSet.Utopia.BaudRate = getInteger(rui.Get(view, "idBaudrate", "value"))
-		setup.ExtSet.Utopia.Tmin = getInteger(rui.Get(view, "idTmin", "value"))
-		logger.Info.Printf("Изменили Utopia на %s baudrate %d и Тмин %d", setup.ExtSet.Utopia.Device, setup.ExtSet.Utopia.BaudRate, setup.ExtSet.Utopia.Tmin)
+		logger.Info.Printf("Изменили Utopia на %s baudrate %d ", setup.ExtSet.Utopia.Device, setup.ExtSet.Utopia.BaudRate)
+		setup.ExtSet.STCIP.Host = rui.GetText(view, "idSTCIP")
+		setup.ExtSet.STCIP.Port = getInteger(rui.Get(view, "idSTCIPPort", "value"))
+		setup.ExtSet.STCIP.Listen = getInteger(rui.Get(view, "idSTCIPListen", "value"))
+		logger.Info.Printf("Изменили STCIP на %s port %d listen %d", setup.ExtSet.STCIP.Host, setup.ExtSet.STCIP.Port, setup.ExtSet.STCIP.Listen)
 		saveAndExit <- 1
 	})
 

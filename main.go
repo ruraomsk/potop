@@ -19,6 +19,7 @@ import (
 	"github.com/ruraomsk/potop/radar"
 	"github.com/ruraomsk/potop/setup"
 	"github.com/ruraomsk/potop/stat"
+	"github.com/ruraomsk/potop/stcip"
 	"github.com/ruraomsk/potop/traffic"
 	"github.com/ruraomsk/potop/utopia"
 	"github.com/ruraomsk/potop/web"
@@ -35,7 +36,7 @@ func init() {
 	if _, err := os.Stat("config.json"); err == nil {
 		file, err := os.ReadFile("config.json")
 		if err == nil {
-			err = json.Unmarshal(file, &setup.ExtSet)
+			_ = json.Unmarshal(file, &setup.ExtSet)
 			setup.Set.Update(*setup.ExtSet)
 		}
 	}
@@ -52,17 +53,22 @@ func main() {
 	fmt.Println("Potop start")
 	logger.Info.Println("Potop start")
 	go journal.LoggerStart()
-	go utopia.Transport()
 	go hardware.Start()
 	go diagramm.DiagrammStart()
 
 	time.Sleep(time.Second)
-	if setup.Set.Utopia.Debug {
-		go utopia.Server()
+	if setup.Set.Utopia.Run {
+		go utopia.Transport()
+		if setup.Set.Utopia.Debug {
+			go utopia.Server()
+		}
+		go utopia.Controller()
 	}
-	go utopia.Controller()
+	if setup.Set.STCIP.Run {
+		go stcip.Start()
+	}
 	isStat := false
-	if setup.Set.ModbusRadar.Radar {
+	if setup.Set.ModbusRadar.Work {
 		go stat.Start(setup.Set.ModbusRadar.Chanels, setup.Set.ModbusRadar.Diaps)
 		go radar.Radar(setup.Set.ModbusRadar.Diap)
 		isStat = true
