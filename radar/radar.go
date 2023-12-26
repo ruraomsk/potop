@@ -15,7 +15,7 @@ var work = false
 var diapazon = 0
 
 var occupancy []int
-var registers []int
+var laststate []int
 
 func GetValues() string {
 	if !work {
@@ -41,7 +41,7 @@ func GetStatus() string {
 func Radar(diap int) {
 	diapazon = diap
 	occupancy = make([]int, setup.Set.ModbusRadar.Chanels)
-	registers = make([]int, setup.Set.ModbusRadar.Chanels)
+	laststate = make([]int, setup.Set.ModbusRadar.Chanels)
 	eh = &handler{uptime: time.Unix(0, 0)}
 	if setup.Set.ModbusRadar.Master {
 		if setup.Set.ModbusRadar.Debug {
@@ -176,21 +176,21 @@ func modbusMaster() {
 				eh.reg16[i] = reg16[i]
 			}
 			for i := 0; i < len(eh.reg16); i++ {
-				if eh.reg16[i] == 0 && registers[i] != 0 {
+				if eh.reg16[i] == 0 && laststate[i] != 0 {
 					//Уехала машина
-					occupancy[i] -= registers[i]
+					occupancy[i]--
 					if occupancy[i] < 0 {
 						occupancy[i] = 0
 					}
-					registers[i] = 0
+					laststate[i] = 0
 				}
-				if eh.reg16[i] != 0 && registers[i] == 0 {
+				if eh.reg16[i] != 0 && laststate[i] == 0 {
 					//Приехала машина
-					occupancy[i] += registers[i]
-					if occupancy[i] > 100 {
-						occupancy[i] = 100
+					occupancy[i]++
+					if occupancy[i] > 10 {
+						occupancy[i] = 10
 					}
-					registers[i] = int(eh.reg16[i])
+					laststate[i] = 1
 				}
 			}
 			eh.uptime = time.Now()
