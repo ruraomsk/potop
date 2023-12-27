@@ -101,6 +101,7 @@ func Start() {
 		case cmd := <-SetWork:
 			if cmd == 0 {
 				StateHardware.setCenral(false)
+				CommandToKDM(0, 0)
 			}
 			if cmd == 1 {
 				firstCommand = true
