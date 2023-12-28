@@ -120,7 +120,7 @@ func Start() {
 				err = readStatus()
 				if err != nil {
 					logger.Error.Print(err.Error())
-					journal.SendMessage(1, err.Error())
+					journal.SendMessage(1, fmt.Sprintf("Во время обмена с КДМ %s", err.Error()))
 					client.Close()
 					StateHardware.setConnect(false)
 				}

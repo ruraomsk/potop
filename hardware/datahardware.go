@@ -3,8 +3,6 @@ package hardware
 import (
 	"fmt"
 	"time"
-
-	"github.com/ruraomsk/potop/setup"
 )
 
 type WriteHolds struct {
@@ -166,6 +164,7 @@ func SetTLC(watchdog int, sgc [64]bool) {
 		}
 	} else {
 		HoldsCmd <- wh
+		firstCommand = true
 	}
 }
 func GetPlan() int {
@@ -193,8 +192,10 @@ func CommandToKDM(cmd int, value int) {
 		//Перейти в автономный режим
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}
 		HoldsCmd <- WriteHolds{Start: 179, Data: []uint16{0, 0}}
-		HoldsCmd <- WriteHolds{Start: 175, Data: []uint16{0, 0, 0, uint16(setup.Set.Modbus.Tmin)}}
-		firstCommand = true
+		if firstCommand {
+			HoldsCmd <- WriteHolds{Start: 175, Data: []uint16{0, 0, 0, uint16(0)}}
+			firstCommand = false
+		}
 	case 1:
 		//Переход в локальный режим
 		CoilsCmd <- WriteCoils{Start: 0, Data: []bool{false, false, false}}

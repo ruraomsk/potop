@@ -33,7 +33,14 @@ func (t *TlcAndGroupControl) ToString() string {
 func (t *TlcAndGroupControl) execute() {
 	// logger.Debug.Printf("execute TlcAndGroupControl %v", t)
 	ctrl.status = t.command
-	if t.command == 2 || t.command == 1 {
+	if t.command == 0 {
+		return
+	}
+	if t.command == 1 {
+		hardware.CommandToKDM(0, 0)
+		return
+	}
+	if t.command == 2 {
 		hardware.SetTLC(t.watchdog, t.ctrlSG)
 		return
 	}
@@ -146,7 +153,9 @@ func (c CountDown) ToString() string {
 
 func (c CountDown) execute() {
 	// logger.Debug.Printf("execute CountDown %v", c)
-	hardware.SetSignalCountDown(c.counts)
+	if ctrl.status == 2 {
+		hardware.SetSignalCountDown(c.counts)
+	}
 
 }
 
@@ -215,7 +224,9 @@ func (e *ExtendedCountDown) ToString() string {
 
 func (e *ExtendedCountDown) execute() {
 	// logger.Debug.Printf("execute ExtendedCountDown")
-	hardware.SetSignalCountDown(e.counts)
+	if ctrl.status == 2 {
+		hardware.SetSignalCountDown(e.counts)
+	}
 }
 
 func (e *ExtendedCountDown) toData() []byte {
