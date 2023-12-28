@@ -105,6 +105,7 @@ func Controller() {
 	go controlUtopiaServer()
 	for {
 		ctrl.input = <-fromServer
+		logger.Debug.Print(ctrl.input)
 		if hardware.IsConnectedKDM() {
 			workMessage()
 		} else {

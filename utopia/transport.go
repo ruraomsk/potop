@@ -58,8 +58,10 @@ func ctrlContext() {
 		case flag := <-context:
 			if !flag {
 				timer.Stop()
+				// logger.Debug.Print("stop timer")
 			} else {
 				timer = time.NewTimer(20 * time.Second)
+				// logger.Debug.Print("start timer")
 			}
 		case <-timer.C:
 			logger.Error.Print("Utopia заблокировалась")
@@ -88,6 +90,7 @@ func Transport() {
 	go ctrlContext()
 	count := 0
 	config := serial.Config{Address: setup.Set.Utopia.Device, BaudRate: setup.Set.Utopia.BaudRate, StopBits: 0, Parity: "N", Timeout: 5 * time.Second}
+mloop:
 	for {
 		if !statusTransport.getConnect() {
 			time.Sleep(5 * time.Second)
@@ -109,26 +112,27 @@ func Transport() {
 				logger.Error.Printf("recieve from spot %s", err.Error())
 				port.Close()
 				statusTransport.setConnect(false)
-				continue
+				continue mloop
 			}
 			fromServer <- buffer
 			statusTransport.setFromServer(buffer)
-			buffer = <-toServer
-			err = sendToServer(buffer)
+			buff := <-toServer
+			err = sendToServer(buff)
 			if err != nil {
 				logger.Error.Printf("send to spot %s", err.Error())
 				port.Close()
 				statusTransport.setConnect(false)
-				continue
+				continue mloop
 			}
-			statusTransport.setToServer(buffer)
+			statusTransport.setToServer(buff)
 		}
 	}
 }
 func getFromServer() ([]byte, error) {
-	body := make([]byte, 256)
+	body := make([]byte, 1024)
 	context <- true
 	n, err := port.Read(body)
+	logger.Debug.Printf("read %d %v", n, body)
 	context <- false
 	if err != nil {
 		return body, err
