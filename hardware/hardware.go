@@ -81,14 +81,15 @@ func Start() {
 				   контроллер покажет в регистре 29 значение 35 или 36 – внешний вызов направлений.
 				   После этого лучше подождать пока пройдет время промтакта.
 				*/
-				err = client.WriteRegisters(175, []uint16{uint16(setup.Set.Modbus.Tmin), 0, 0, uint16(setup.Set.Modbus.Tmin)})
+				m := []uint16{uint16(setup.Set.Modbus.Tmin), 0, 0, uint16(setup.Set.Modbus.Tmin)}
+				err = client.WriteRegisters(175, m)
 				if err != nil {
 					logger.Error.Print(err.Error())
 					client.Close()
 					continue
 				} else {
 					if setup.Set.Modbus.Log {
-						logger.Debug.Printf("write to 175")
+						logger.Debug.Printf("write to 175 %v", m)
 					}
 				}
 				count = 0
