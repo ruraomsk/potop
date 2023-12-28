@@ -132,7 +132,7 @@ func getFromServer() ([]byte, error) {
 	body := make([]byte, 1024)
 	context <- true
 	n, err := port.Read(body)
-	logger.Debug.Printf("read %d %v", n, body)
+	// logger.Debug.Printf("read %d %v", n, body)
 	context <- false
 	if err != nil {
 		return body, err
