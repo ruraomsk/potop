@@ -2,6 +2,7 @@ package utopia
 
 import (
 	"errors"
+	"os"
 	"sync"
 	"time"
 
@@ -45,12 +46,30 @@ var fromServer chan []byte
 var toServer chan []byte
 var fromController chan []byte
 var toController chan []byte
+var context chan bool
 var port serial.Port
 var err error
 var statusTransport = StatusUtopiaTransport{Connect: false, LastOperation: time.Unix(0, 0), FromServer: make([]byte, 0), ToServer: make([]byte, 0)}
 
+func ctrlContext() {
+	var timer = time.NewTimer(6000 * time.Hour)
+	for {
+		select {
+		case flag := <-context:
+			if !flag {
+				timer.Stop()
+			} else {
+				timer = time.NewTimer(20 * time.Second)
+			}
+		case <-timer.C:
+			logger.Error.Print("Utopia заблокировалась")
+			time.Sleep(time.Second)
+			os.Exit(100)
+		}
+	}
+}
 func Transport() {
-
+	context = make(chan bool)
 	fromController = make(chan []byte)
 	fromServer = make(chan []byte)
 	toController = make(chan []byte)
@@ -66,6 +85,7 @@ func Transport() {
 			fromController <- u
 		}
 	}
+	go ctrlContext()
 	count := 0
 	config := serial.Config{Address: setup.Set.Utopia.Device, BaudRate: setup.Set.Utopia.BaudRate, StopBits: 0, Parity: "N", Timeout: 5 * time.Second}
 	for {
@@ -107,7 +127,9 @@ func Transport() {
 }
 func getFromServer() ([]byte, error) {
 	body := make([]byte, 256)
+	context <- true
 	n, err := port.Read(body)
+	context <- false
 	if err != nil {
 		return body, err
 	}
@@ -115,7 +137,9 @@ func getFromServer() ([]byte, error) {
 	return body[:n], nil
 }
 func sendToServer(buffer []byte) error {
+	context <- true
 	n, err := port.Write(buffer)
+	context <- false
 	if err != nil {
 		return err
 	}
