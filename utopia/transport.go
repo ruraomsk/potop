@@ -88,6 +88,7 @@ func Transport() {
 		}
 	}
 	go ctrlContext()
+	utopiaError := false
 	count := 0
 	config := serial.Config{Address: setup.Set.Utopia.Device, BaudRate: setup.Set.Utopia.BaudRate, StopBits: 0, Parity: "N", Timeout: 5 * time.Second}
 mloop:
@@ -110,16 +111,23 @@ mloop:
 			buffer, err := getFromServer()
 			if err != nil {
 				logger.Error.Printf("recieve from spot %s", err.Error())
+				utopiaError = true
 				port.Close()
 				statusTransport.setConnect(false)
 				continue mloop
 			}
+			if utopiaError {
+				utopiaError = false
+				continue
+			}
 			fromServer <- buffer
 			statusTransport.setFromServer(buffer)
 			buff := <-toServer
+			// logger.Debug.Print(buff)
 			err = sendToServer(buff)
 			if err != nil {
 				logger.Error.Printf("send to spot %s", err.Error())
+				utopiaError = true
 				port.Close()
 				statusTransport.setConnect(false)
 				continue mloop

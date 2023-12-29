@@ -44,7 +44,7 @@ var ctrl = ControllerUtopia{id: 1, lastACK: 0, input: make([]byte, 0), output: m
 var mutex sync.Mutex
 
 func getDuration() time.Duration {
-	return 20 * time.Second
+	return 5 * time.Minute
 }
 
 var live chan any
@@ -119,8 +119,8 @@ func workMessage() {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if err := ctrl.verify(); err != nil {
-		ctrl.sendNACK()
 		logger.Error.Print(err.Error())
+		ctrl.sendNACK()
 		return
 	}
 	if ctrl.isNak() {
@@ -151,8 +151,11 @@ func workMessage() {
 			logger.Error.Print(err.Error())
 		}
 		ctrl.TlcAndGroupControl.execute()
+		// logger.Debug.Printf("after execute")
 		ctrl.status = ctrl.TlcAndGroupControl.command
+		// logger.Debug.Printf("after command")
 		ctrl.StatusAndDetections.fill()
+		// logger.Debug.Printf("after fill")
 		ctrl.sendReplay(ctrl.StatusAndDetections.toData())
 	case 8:
 		// Message 8 – Signal group count-down
