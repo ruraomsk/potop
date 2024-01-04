@@ -57,7 +57,6 @@ func controlCentral() {
 		logger.Info.Print("Есть управление от центра")
 		journal.SendMessage(2, "Есть управление от STCIP")
 		state.connect = true
-		hardware.SetWork <- 1
 	loop:
 		for {
 			select {
